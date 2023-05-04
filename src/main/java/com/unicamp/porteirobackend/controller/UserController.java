@@ -3,55 +3,61 @@ package com.unicamp.porteirobackend.controller;
 import java.util.List;
 import java.util.Optional;
 
+import com.unicamp.porteirobackend.dto.UserDTO;
+import com.unicamp.porteirobackend.enums.UserRole;
 import com.unicamp.porteirobackend.repository.UserRepository;
 import com.unicamp.porteirobackend.entity.User;
+import com.unicamp.porteirobackend.service.PorteiroService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
 
     @Autowired
-    private UserRepository repository;
+    private PorteiroService porteiroService;
     @GetMapping
-    public List<User> getAllUsers(){
-        return repository.findAll();
+    public List<UserDTO> getAllUsers(){
+        return porteiroService.findAll();
     }
 
     @PostMapping
-    public User createUser(@RequestBody User user){
-        String rawPassword = user.getPassword();
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        user.setPassword(encoder.encode(rawPassword));
-        return repository.save(user);
+    public ResponseEntity<UserDTO> createUser(@RequestBody User user){
+        user = porteiroService.createUser(user);
+        if (user == null)
+            return ResponseEntity.internalServerError().build();
+
+        return ResponseEntity.created(ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(new UserDTO(user)).toUri()).build();
     }
 
     @GetMapping("/{id}")
-    public User getUserById(@PathVariable int id){
-        Optional<User> optionalUser = repository.findById(id);
-        return optionalUser.orElse(null);
+    public ResponseEntity<UserDTO> getUserById(@PathVariable int id){
+        UserDTO user = porteiroService.getUserById(id);
+        if (user == null)
+            return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(user);
     }
 
     @PutMapping("/{id}")
-    public User updateUser(@PathVariable int id, @RequestBody User user){
-        Optional<User> optionalUser = repository.findById(id);
-        if(optionalUser.isPresent()){
-            User existingUser = optionalUser.get();
-            existingUser.setName(user.getName());
-            existingUser.setPhoneNumber(user.getPhoneNumber());
-            existingUser.setEmail(user.getEmail());
-            existingUser.setPassword(user.getPassword());
-            existingUser.setUserRole(user.getUserRole());
-            return repository.save(existingUser);
-        }else{
-            return null;
+    public ResponseEntity<UserDTO> updateUser(@PathVariable int id, @RequestBody UserDTO user){
+        if (user == null) {
+            return ResponseEntity.badRequest().build();
         }
+        UserDTO userDTO = porteiroService.updateUser(id, user);
+        if (userDTO == null)
+            return ResponseEntity.internalServerError().build();
+        return ResponseEntity.ok(userDTO);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable int id){
-        repository.deleteById(id);
+    public ResponseEntity<Void> deleteUser(@PathVariable int id){
+        boolean deleted = porteiroService.deleteUser(id);
+        if (deleted)
+            return ResponseEntity.noContent().build();
+        return ResponseEntity.notFound().build();
     }
 }
