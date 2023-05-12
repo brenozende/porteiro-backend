@@ -2,7 +2,11 @@ package com.unicamp.porteirobackend.entity;
 
 import com.unicamp.porteirobackend.enums.UserRole;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.Hibernate;
 
@@ -13,32 +17,42 @@ import java.util.Set;
 @Getter
 @Setter
 @Entity
-@Table(name = "users")
+@Table(name = "users", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "id"),
+        @UniqueConstraint(columnNames = "email")
+})
+@NoArgsConstructor
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @Column(name = "name", nullable = false)
-    private String name;
+    @NotBlank
+    @Size(max = 20)
+    private String username;
 
-    @Column(name = "phone_number")
-    private String phoneNumber;
-
-    @Column(name = "email", nullable = false)
+    @NotBlank
+    @Size(max = 50)
+    @Email
     private String email;
 
-    @Column(name = "password", nullable = false)
+    @NotBlank
+    @Size(max = 120)
     private String password;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "user_role", nullable = false, length = 3)
-    private UserRole userRole;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable( name = "user_roles",
+                joinColumns = @JoinColumn(name = "user_id"),
+                inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private Set<Role> roles;
 
-    @ManyToMany(mappedBy = "users")
-    private Set<Visitor> visitors = new LinkedHashSet<>();
+    public User(String username, String email, String password){
+        this.setUsername(username);
+        this.setEmail(email);
+        this.setPassword(password);
+    }
 
     @Override
     public boolean equals(Object o) {

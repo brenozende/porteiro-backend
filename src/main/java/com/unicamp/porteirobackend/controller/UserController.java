@@ -1,37 +1,39 @@
 package com.unicamp.porteirobackend.controller;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.unicamp.porteirobackend.dto.UserDTO;
-import com.unicamp.porteirobackend.enums.UserRole;
-import com.unicamp.porteirobackend.repository.UserRepository;
 import com.unicamp.porteirobackend.entity.User;
+import com.unicamp.porteirobackend.enums.UserRole;
 import com.unicamp.porteirobackend.service.PorteiroService;
+import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
+@CrossOrigin(origins = "*", maxAge = 3600)
 public class UserController {
+
+    @GetMapping("/all")
+    public String allAccess(){
+        return "Public content";
+    }
+
+    @GetMapping("/user")
+    public String userAccess(){
+        return "User content";
+    }
 
     @Autowired
     private PorteiroService porteiroService;
+
     @GetMapping
     public List<UserDTO> getAllUsers(){
-        return porteiroService.findAll();
-    }
-
-    @PostMapping
-    public ResponseEntity<UserDTO> createUser(@RequestBody User user){
-        user = porteiroService.createUser(user);
-        if (user == null)
-            return ResponseEntity.internalServerError().build();
-
-        return ResponseEntity.created(ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(new UserDTO(user)).toUri()).build();
+        return porteiroService.findAllUsers();
     }
 
     @GetMapping("/{id}")
@@ -40,17 +42,6 @@ public class UserController {
         if (user == null)
             return ResponseEntity.notFound().build();
         return ResponseEntity.ok(user);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<UserDTO> updateUser(@PathVariable int id, @RequestBody UserDTO user){
-        if (user == null) {
-            return ResponseEntity.badRequest().build();
-        }
-        UserDTO userDTO = porteiroService.updateUser(id, user);
-        if (userDTO == null)
-            return ResponseEntity.internalServerError().build();
-        return ResponseEntity.ok(userDTO);
     }
 
     @DeleteMapping("/{id}")

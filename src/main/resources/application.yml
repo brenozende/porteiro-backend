@@ -11,3 +11,18 @@ spring:
     url: jdbc:${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+
+porteiro:
+  app:
+    jwtSecret: vAavT+sW/M4qnHD0k6coA//g4gslN8qL9i0VFq6ZBsqxd3yDtRKtQQkM8WzpNQabbSBI5suzxweO4ZR2VG8mGg==
+    jwtExpirationMs: 86400000
+
+
+
+
+
+
+
+
+
+
