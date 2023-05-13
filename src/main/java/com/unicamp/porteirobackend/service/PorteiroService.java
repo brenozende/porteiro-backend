@@ -1,6 +1,8 @@
 package com.unicamp.porteirobackend.service;
 
 import com.unicamp.porteirobackend.dto.UserDTO;
+import com.unicamp.porteirobackend.dto.request.RegisterForm;
+import com.unicamp.porteirobackend.entity.Resident;
 import com.unicamp.porteirobackend.entity.User;
 import org.springframework.stereotype.Service;
 
@@ -14,4 +16,6 @@ public interface PorteiroService {
     List<UserDTO> findAllUsers();
 
     UserDTO getUserById(int id);
+
+    Resident registerResident(RegisterForm form);
 }

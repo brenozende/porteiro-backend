@@ -49,4 +49,13 @@ public class Resident {
     @Column(name = "updated_at")
     private Date updatedAt;
 
+    @Column(name = "owner")
+    private boolean owner;
+
+    @ManyToMany
+    @JoinTable(name = "resident_apartments",
+            joinColumns = @JoinColumn(name = "resident_id"),
+            inverseJoinColumns = @JoinColumn(name = "apartments_id"))
+    private Set<Apartment> apartments = new LinkedHashSet<>();
+
 }

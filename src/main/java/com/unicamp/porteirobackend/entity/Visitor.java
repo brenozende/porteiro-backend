@@ -1,7 +1,9 @@
 package com.unicamp.porteirobackend.entity;
 
+import com.unicamp.porteirobackend.dto.VisitorDTO;
 import com.unicamp.porteirobackend.enums.EAuthType;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import jakarta.persistence.*;
 import org.hibernate.Hibernate;
@@ -12,6 +14,7 @@ import java.util.*;
 @Setter
 @Entity
 @Table(name = "visitor")
+@NoArgsConstructor
 public class Visitor {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -28,14 +31,6 @@ public class Visitor {
     @Column(name = "auth_type")
     private EAuthType authType;
 
-
-
-    @ManyToMany
-    @JoinTable(name = "visitor_users",
-            joinColumns = @JoinColumn(name = "visitor_id"),
-            inverseJoinColumns = @JoinColumn(name = "users_id"))
-    private Set<User> users = new LinkedHashSet<>();
-
     @Column(name = "relationship")
     private String relationship;
 
@@ -50,6 +45,16 @@ public class Visitor {
     @Temporal(TemporalType.DATE)
     @Column(name = "updated_at")
     private Date updatedAt;
+
+    public Visitor(VisitorDTO dto, Resident resident) {
+        this.name = dto.getName();
+        this.document = dto.getDocument();
+        this.relationship = dto.getRelationship();
+        this.resident = resident;
+        this.createdAt = new Date();
+        this.updatedAt = new Date();
+        this.authType = EAuthType.CALL;
+    }
 
     @Override
     public boolean equals(Object o) {
