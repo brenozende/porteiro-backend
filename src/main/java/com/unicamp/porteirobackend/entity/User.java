@@ -1,6 +1,5 @@
 package com.unicamp.porteirobackend.entity;
 
-import com.unicamp.porteirobackend.enums.UserRole;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -10,7 +9,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.Hibernate;
 
-import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 

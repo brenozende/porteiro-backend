@@ -6,7 +6,7 @@ import com.unicamp.porteirobackend.dto.response.JwtResponse;
 import com.unicamp.porteirobackend.dto.response.MessageResponse;
 import com.unicamp.porteirobackend.entity.Role;
 import com.unicamp.porteirobackend.entity.User;
-import com.unicamp.porteirobackend.enums.UserRole;
+import com.unicamp.porteirobackend.enums.EUserRole;
 import com.unicamp.porteirobackend.repository.RoleRepository;
 import com.unicamp.porteirobackend.repository.UserRepository;
 import com.unicamp.porteirobackend.security.jwt.JwtUtils;
@@ -86,24 +86,24 @@ public class AuthController {
         Set<Role> roles = new HashSet<>();
 
         if (strRoles == null) {
-            Role userRole = roleRepository.findByName(UserRole.RES)
+            Role userRole = roleRepository.findByName(EUserRole.RES)
                     .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
             roles.add(userRole);
         } else {
             strRoles.forEach(role -> {
                 switch (role) {
                     case "ADM" -> {
-                        Role adminRole = roleRepository.findByName(UserRole.ADM)
+                        Role adminRole = roleRepository.findByName(EUserRole.ADM)
                                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
                         roles.add(adminRole);
                     }
                     case "CON" -> {
-                        Role conciergeRole = roleRepository.findByName(UserRole.CON)
+                        Role conciergeRole = roleRepository.findByName(EUserRole.CON)
                                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
                         roles.add(conciergeRole);
                     }
                     default -> {
-                        Role userRole = roleRepository.findByName(UserRole.RES)
+                        Role userRole = roleRepository.findByName(EUserRole.RES)
                                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
                         roles.add(userRole);
                     }

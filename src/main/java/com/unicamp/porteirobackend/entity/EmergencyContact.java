@@ -1,37 +1,38 @@
 package com.unicamp.porteirobackend.entity;
 
-import com.unicamp.porteirobackend.enums.EUserRole;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.Hibernate;
 
 import java.util.Objects;
 
-@Entity
-@Table(name = "roles")
-@NoArgsConstructor
 @Getter
 @Setter
-@ToString
-public class Role {
+@Entity
+@Table(name = "emergency_contact")
+public class EmergencyContact {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Integer id;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private EUserRole name;
+    @Column(name = "name")
+    private String name;
 
-    public Role(EUserRole name) {
-        this.name = name;
-    }
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
+    @ManyToOne
+    @JoinColumn(name = "resident_id")
+    private Resident resident;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        Role role = (Role) o;
-        return getId() != null && Objects.equals(getId(), role.getId());
+        EmergencyContact that = (EmergencyContact) o;
+        return getId() != null && Objects.equals(getId(), that.getId());
     }
 
     @Override

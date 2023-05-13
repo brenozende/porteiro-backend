@@ -3,7 +3,7 @@ package com.unicamp.porteirobackend.controller;
 import java.util.List;
 import java.util.Optional;
 
-import com.unicamp.porteirobackend.entity.Reservation;
+import com.unicamp.porteirobackend.entity.Booking;
 import com.unicamp.porteirobackend.repository.ReservationRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,31 +17,31 @@ public class ReservationController {
     private ReservationRepository repository;
 
     @GetMapping
-    public List<Reservation> getAllReservations() {
+    public List<Booking> getAllReservations() {
         return repository.findAll();
     }
 
     @GetMapping("/{id}")
-    public Reservation getReservationById(@PathVariable Integer id) {
-        Optional<Reservation> optionalReservation = repository.findById(id);
+    public Booking getReservationById(@PathVariable Integer id) {
+        Optional<Booking> optionalReservation = repository.findById(id);
         return optionalReservation.orElse(null);
     }
 
     @PostMapping
-    public Reservation createReservation(@RequestBody Reservation reservation) {
-        return repository.save(reservation);
+    public Booking createReservation(@RequestBody Booking booking) {
+        return repository.save(booking);
     }
 
     @PutMapping("/{id}")
-    public Reservation updateReservation(@PathVariable Integer id, @RequestBody Reservation reservation) {
-        Optional<Reservation> optionalReservation = repository.findById(id);
+    public Booking updateReservation(@PathVariable Integer id, @RequestBody Booking booking) {
+        Optional<Booking> optionalReservation = repository.findById(id);
         if (optionalReservation.isPresent()) {
-            Reservation existingReservation = optionalReservation.get();
-            existingReservation.setVenue(reservation.getVenue());
-            existingReservation.setUser(reservation.getUser());
-            existingReservation.setReservationFrom(reservation.getReservationFrom());
-            existingReservation.setReservationTo(reservation.getReservationTo());
-            return repository.save(existingReservation);
+            Booking existingBooking = optionalReservation.get();
+            existingBooking.setPlace(booking.getPlace());
+            existingBooking.setResident(booking.getResident());
+            existingBooking.setReservationFrom(booking.getReservationFrom());
+            existingBooking.setReservationTo(booking.getReservationTo());
+            return repository.save(existingBooking);
         } else {
             return null;
         }

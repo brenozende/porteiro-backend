@@ -1,5 +1,5 @@
 package com.unicamp.porteirobackend.enums;
 
-public enum AuthType {
+public enum EAuthType {
     CALL, RESTRICTED, FREE;
 }

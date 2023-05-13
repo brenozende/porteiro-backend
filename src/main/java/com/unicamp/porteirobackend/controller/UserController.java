@@ -3,15 +3,10 @@ package com.unicamp.porteirobackend.controller;
 import java.util.List;
 
 import com.unicamp.porteirobackend.dto.UserDTO;
-import com.unicamp.porteirobackend.entity.User;
-import com.unicamp.porteirobackend.enums.UserRole;
 import com.unicamp.porteirobackend.service.PorteiroService;
-import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping("/api/users")

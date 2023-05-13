@@ -1,13 +1,12 @@
 package com.unicamp.porteirobackend.entity;
 
-import com.unicamp.porteirobackend.enums.AuthType;
+import com.unicamp.porteirobackend.enums.EAuthType;
 import lombok.Getter;
 import lombok.Setter;
 import jakarta.persistence.*;
+import org.hibernate.Hibernate;
 
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Getter
 @Setter
@@ -27,10 +26,9 @@ public class Visitor {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "auth_type")
-    private AuthType authType;
+    private EAuthType authType;
 
-//    @Column(name = "restrictions")
-//    private Map<String, String> restrictions;
+
 
     @ManyToMany
     @JoinTable(name = "visitor_users",
@@ -38,4 +36,31 @@ public class Visitor {
             inverseJoinColumns = @JoinColumn(name = "users_id"))
     private Set<User> users = new LinkedHashSet<>();
 
+    @Column(name = "relationship")
+    private String relationship;
+
+    @ManyToOne
+    @JoinColumn(name = "resident_id")
+    private Resident resident;
+
+    @Temporal(TemporalType.DATE)
+    @Column(name = "created_at")
+    private Date createdAt;
+
+    @Temporal(TemporalType.DATE)
+    @Column(name = "updated_at")
+    private Date updatedAt;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        Visitor visitor = (Visitor) o;
+        return getId() != null && Objects.equals(getId(), visitor.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

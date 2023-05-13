@@ -4,11 +4,13 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Date;
+
 @Getter
 @Setter
 @Entity
 @Table(name = "venue")
-public class Venue {
+public class Place {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id", nullable = false)
@@ -17,13 +19,15 @@ public class Venue {
     @Column(name = "name")
     private String name;
 
+    @Temporal(TemporalType.DATE)
     @Column(name = "free_from")
-    private String freeFrom;
+    private Date freeFrom;
 
+    @Temporal(TemporalType.DATE)
     @Column(name = "free_until")
-    private String freeUntil;
+    private Date freeUntil;
 
-    @Column(name = "block_reservations")
-    private Boolean blockReservations;
+    @Column(name = "blocked")
+    private Boolean blocked;
 
 }

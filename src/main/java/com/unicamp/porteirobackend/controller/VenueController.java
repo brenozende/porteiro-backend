@@ -1,8 +1,8 @@
 package com.unicamp.porteirobackend.controller;
 
 
-import com.unicamp.porteirobackend.entity.Venue;
-import com.unicamp.porteirobackend.repository.VenueRepository;
+import com.unicamp.porteirobackend.entity.Place;
+import com.unicamp.porteirobackend.repository.PlaceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,30 +14,30 @@ import java.util.Optional;
 public class VenueController {
 
     @Autowired
-    private VenueRepository repository;
+    private PlaceRepository repository;
 
     @GetMapping
-    public List<Venue> getAllVenue() {
+    public List<Place> getAllVenue() {
         return repository.findAll();
     }
 
     @PostMapping
-    public Venue createVenue(@RequestBody Venue venue) {
-        return repository.save(venue);
+    public Place createVenue(@RequestBody Place place) {
+        return repository.save(place);
     }
 
     @GetMapping("/{id}")
-    public Venue getVenueById(@PathVariable Integer id) {
-        Optional<Venue> optionalVenue = repository.findById(id);
+    public Place getVenueById(@PathVariable Integer id) {
+        Optional<Place> optionalVenue = repository.findById(id);
         return optionalVenue.orElse(null);
     }
 
     @PutMapping("/{id}")
-    public Venue updateVenue(@PathVariable Integer id, @RequestBody Venue venue) {
-        Optional<Venue> optionalVenue = repository.findById(id);
+    public Place updateVenue(@PathVariable Integer id, @RequestBody Place place) {
+        Optional<Place> optionalVenue = repository.findById(id);
         if (optionalVenue.isPresent()) {
-            venue.setId(id);
-            return repository.save(venue);
+            place.setId(id);
+            return repository.save(place);
         } else {
             return null;
         }

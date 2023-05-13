@@ -1,7 +1,7 @@
 package com.unicamp.porteirobackend.controller;
 
 import com.unicamp.porteirobackend.entity.Visit;
-import com.unicamp.porteirobackend.enums.VisitStatus;
+import com.unicamp.porteirobackend.enums.EVisitStatus;
 import com.unicamp.porteirobackend.repository.VisitRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -50,12 +50,8 @@ public class VisitController {
     }
 
     @GetMapping("/status/{status}")
-    public List<Visit> getVisitByStatus(@PathVariable VisitStatus status) {
+    public List<Visit> getVisitByStatus(@PathVariable EVisitStatus status) {
         return repository.findByVisitStatus(status);
     }
 
-    @GetMapping("/date/{date}")
-    public List<Visit> getVisitByDate(@PathVariable Date date) {
-        return repository.findByDate(date);
-    }
 }

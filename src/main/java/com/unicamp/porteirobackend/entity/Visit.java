@@ -1,6 +1,6 @@
 package com.unicamp.porteirobackend.entity;
 
-import com.unicamp.porteirobackend.enums.VisitStatus;
+import com.unicamp.porteirobackend.enums.EVisitStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,11 +27,14 @@ public class Visit {
     @Enumerated(EnumType.STRING)
     @Column(name = "visit_status")
     @JdbcTypeCode(SqlTypes.VARCHAR)
-    private VisitStatus visitStatus;
+    private EVisitStatus visitStatus;
 
     @Temporal(TemporalType.DATE)
-    @Column(name = "date", nullable = false)
-    @JdbcTypeCode(SqlTypes.DATE)
-    private Date date;
+    @Column(name = "created_at")
+    private Date createdAt;
+
+    @Temporal(TemporalType.DATE)
+    @Column(name = "updated_at")
+    private Date updatedAt;
 
 }

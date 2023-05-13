@@ -9,20 +9,20 @@ import java.util.Date;
 @Getter
 @Setter
 @Entity
-@Table(name = "reservation")
-public class Reservation {
+@Table(name = "booking")
+public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id", nullable = false)
     private Integer id;
 
     @OneToOne(orphanRemoval = true)
-    @JoinColumn(name = "venue_id")
-    private Venue venue;
+    @JoinColumn(name = "place_id")
+    private Place place;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    @JoinColumn(name = "resident_id")
+    private Resident resident;
 
     @Temporal(TemporalType.DATE)
     @Column(name = "reservation_from")
