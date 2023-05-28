@@ -7,6 +7,7 @@ import com.unicamp.porteirobackend.entity.*;
 import com.unicamp.porteirobackend.enums.EAuthType;
 import com.unicamp.porteirobackend.enums.EUserRole;
 import com.unicamp.porteirobackend.repository.ApartmentRepository;
+import com.unicamp.porteirobackend.repository.ResidentRepository;
 import com.unicamp.porteirobackend.repository.UserRepository;
 import com.unicamp.porteirobackend.service.PorteiroService;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,8 @@ import java.util.*;
 @Service
 @Slf4j
 public class PorteiroServiceImpl implements PorteiroService {
+    @Autowired
+    private ResidentRepository residentRepository;
     @Autowired
     private ApartmentRepository apartmentRepository;
 
@@ -68,6 +71,18 @@ public class PorteiroServiceImpl implements PorteiroService {
         });
         resident.setEmergencyContacts(emergencyContacts);
 
+        return resident;
+    }
+
+    @Override
+    public Resident addVisitors(Integer residentId, List<Visitor> visitors) {
+        Optional<Resident> residentOptional = residentRepository.findById(residentId);
+        if (residentOptional.isEmpty())
+            return null;
+        Resident resident = residentOptional.get();
+        for (Visitor v : visitors) {
+            resident.getVisitors().add(v);
+        }
         return resident;
     }
 
