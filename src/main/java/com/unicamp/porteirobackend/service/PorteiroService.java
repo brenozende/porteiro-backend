@@ -21,4 +21,6 @@ public interface PorteiroService {
     Resident registerResident(RegisterForm form);
 
     Resident addVisitors(Integer residentId, List<Visitor> visitors);
+
+    List<Visitor> findVisitorsByResident(Integer residentId);
 }

@@ -87,6 +87,16 @@ public class PorteiroServiceImpl implements PorteiroService {
     }
 
     @Override
+    public List<Visitor> findVisitorsByResident(Integer residentId) {
+
+        Optional<Resident> residentOptional = residentRepository.findById(residentId);
+        if (residentOptional.isEmpty())
+            return new ArrayList<>();
+        Resident resident = residentOptional.get();
+        return resident.getVisitors().stream().toList();
+    }
+
+    @Override
     public List<UserDTO> findAllUsers(){
         List<UserDTO> usersDTO = new ArrayList<>();
         List<User> users = userRepository.findAll();

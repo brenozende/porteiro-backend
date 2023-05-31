@@ -35,7 +35,7 @@ public class ResidentController {
         return ResponseEntity.created(UriComponentsBuilder.fromPath("/{id}").buildAndExpand(resident.getId()).toUri()).body(resident);
     }
 
-    @PutMapping("/{residentId}/add-visitors")
+    @PutMapping("/{residentId}/visitors/add")
     public ResponseEntity<Resident> addVisitors(@RequestBody List<Visitor> visitors,
                                                 @PathVariable Integer residentId) {
 
@@ -44,5 +44,16 @@ public class ResidentController {
             return ResponseEntity.notFound().build();
 
         return ResponseEntity.ok(resident);
+    }
+
+    @GetMapping("/{residentId}/visitors")
+    public ResponseEntity<List<Visitor>> findVisitorsByResidentId(@PathVariable Integer residentId) {
+
+        List<Visitor> visitors = porteiroService.findVisitorsByResident(residentId);
+
+        if (visitors.isEmpty())
+            return ResponseEntity.notFound().build();
+
+        return ResponseEntity.ok(visitors);
     }
 }
