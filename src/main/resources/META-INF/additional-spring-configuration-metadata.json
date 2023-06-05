@@ -1,0 +1,14 @@
+{
+  "properties": [
+    {
+      "name": "porteiro.app.jwtSecret",
+      "type": "java.lang.String",
+      "description": "Chave secreta de JWT."
+    },
+    {
+      "name": "porteiro.app.jwtExpirationMs",
+      "type": "java.lang.Integer",
+      "description": "Tempo de expiração do token JWT."
+    }
+  ]
+}
