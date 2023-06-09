@@ -58,4 +58,8 @@ public class Resident {
             inverseJoinColumns = @JoinColumn(name = "apartments_id"))
     private Set<Apartment> apartments = new LinkedHashSet<>();
 
+    @OneToMany(orphanRemoval = true)
+    @JoinColumn(name = "resident_id")
+    private Set<Vehicle> vehicles = new LinkedHashSet<>();
+
 }

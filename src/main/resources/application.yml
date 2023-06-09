@@ -8,9 +8,9 @@ spring:
       ddl-auto: update
     show-sql: true
   datasource:
-    url: jdbc:${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: jdbc:${DB_URL:postgresql://porteiro.postgres.database.azure.com:5432/porteiro}
+    username: ${DB_USERNAME:porteiroadm}
+    password: ${DB_PASSWORD:DB090623!@}
 
 porteiro:
   app:
