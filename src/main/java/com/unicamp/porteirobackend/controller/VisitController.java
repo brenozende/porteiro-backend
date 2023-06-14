@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+@CrossOrigin(allowedHeaders = {"Authorization"})
 @RestController
 @RequestMapping("/api/visits")
 public class VisitController {
