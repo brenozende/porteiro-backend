@@ -64,8 +64,7 @@ public class WebSecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .cors()
-                .and()
+                .cors().disable()
                 .exceptionHandling().authenticationEntryPoint(unauthorizedHandler);
 
 
