@@ -9,6 +9,7 @@ import com.unicamp.porteirobackend.enums.EUserRole;
 import com.unicamp.porteirobackend.repository.ApartmentRepository;
 import com.unicamp.porteirobackend.repository.ResidentRepository;
 import com.unicamp.porteirobackend.repository.UserRepository;
+import com.unicamp.porteirobackend.security.services.UserDetailsImpl;
 import com.unicamp.porteirobackend.service.PorteiroService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,6 +121,12 @@ public class PorteiroServiceImpl implements PorteiroService {
         dto.setUsername(userOptional.get().getUsername());
         dto.setEmail(userOptional.get().getEmail());
         return dto;
+    }
+
+    @Override
+    public User getUser(UserDetailsImpl userDetails) {
+        Optional<User> user = userRepository.findByUsername(userDetails.getUsername());
+        return user.orElse(null);
     }
 
     @Override

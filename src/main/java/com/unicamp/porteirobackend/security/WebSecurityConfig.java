@@ -60,7 +60,10 @@ public class WebSecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/api/**").hasAnyAuthority("RES", "ADM", "CON")
+//                        .requestMatchers("/api/**").hasAnyAuthority("RES", "ADM", "CON")
+                        .requestMatchers("/api/**").hasAnyAuthority("RES", "CON", "ADM")
+                        .requestMatchers("/con/**").hasAnyAuthority("CON", "ADM")
+                        .requestMatchers("/adm/**").hasAnyAuthority("ADM")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
