@@ -1,5 +1,6 @@
 package com.unicamp.porteirobackend.service;
 
+import com.unicamp.porteirobackend.dto.BookingDTO;
 import com.unicamp.porteirobackend.dto.UserDTO;
 import com.unicamp.porteirobackend.dto.request.RegisterForm;
 import com.unicamp.porteirobackend.entity.Resident;
@@ -26,4 +27,10 @@ public interface PorteiroService {
     List<Visitor> findVisitorsByResident(Integer residentId);
 
     User getUser(UserDetailsImpl userDetails);
+
+    BookingDTO createBooking(BookingDTO booking, User user);
+
+    BookingDTO updateBooking(Integer bookingId, BookingDTO bookingRequest, User user);
+
+    void deleteBooking(Integer id, User user);
 }

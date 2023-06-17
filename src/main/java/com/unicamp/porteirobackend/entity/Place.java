@@ -9,7 +9,7 @@ import java.util.Date;
 @Getter
 @Setter
 @Entity
-@Table(name = "venue")
+@Table(name = "place")
 public class Place {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -28,6 +28,6 @@ public class Place {
     private Date freeUntil;
 
     @Column(name = "blocked")
-    private Boolean blocked;
+    private Boolean blocked = false;
 
 }

@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ResidentRepository extends JpaRepository<Resident, Integer> {
+    Resident findByUser_Id(Integer id);
 }
