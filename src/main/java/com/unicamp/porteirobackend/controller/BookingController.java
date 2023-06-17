@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
 @RequestMapping("/api/reservations")
@@ -55,12 +56,12 @@ public class BookingController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createBooking(@RequestBody BookingDTO booking) {
+    public ResponseEntity<?> createBooking(@RequestBody BookingDTO bookingRequest) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = porteiroService.getUser(userDetails);
         BookingDTO bookingDTO;
         try {
-            bookingDTO = porteiroService.createBooking(booking, user);
+            bookingDTO = porteiroService.createBooking(bookingRequest, user);
         } catch (BookingCreationException e) {
             return ResponseEntity.badRequest().body(e.getErrorMsg());
         } catch (Exception e){
@@ -68,7 +69,7 @@ public class BookingController {
             return ResponseEntity.internalServerError().build();
         }
 
-        return ResponseEntity.ok(bookingDTO);
+        return ResponseEntity.created(UriComponentsBuilder.fromPath("/{id}").buildAndExpand(bookingDTO.getId()).toUri()).body(bookingDTO);
     }
 
     @PutMapping("/{id}")
