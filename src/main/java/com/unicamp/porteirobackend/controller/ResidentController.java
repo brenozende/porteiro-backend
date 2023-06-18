@@ -8,12 +8,11 @@ import com.unicamp.porteirobackend.security.services.UserDetailsImpl;
 import com.unicamp.porteirobackend.service.PorteiroService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -23,6 +22,7 @@ public class ResidentController {
     @Autowired
     PorteiroService porteiroService;
 
+    @PreAuthorize("hasAnyAuthority('ADM', 'CON')")
     @PostMapping("/register")
     public ResponseEntity<Resident> registerResident(@RequestBody RegisterForm form){
         UserDetailsImpl user = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -35,6 +35,7 @@ public class ResidentController {
         return ResponseEntity.created(UriComponentsBuilder.fromPath("/{id}").buildAndExpand(resident.getId()).toUri()).body(resident);
     }
 
+    @PreAuthorize("hasAnyAuthority('ADM', 'CON')")
     @PutMapping("/{residentId}/visitors/add")
     public ResponseEntity<Resident> addVisitors(@RequestBody List<Visitor> visitors,
                                                 @PathVariable Integer residentId) {

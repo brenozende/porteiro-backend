@@ -19,14 +19,6 @@ public class Place {
     @Column(name = "name")
     private String name;
 
-    @Temporal(TemporalType.DATE)
-    @Column(name = "free_from")
-    private Date freeFrom;
-
-    @Temporal(TemporalType.DATE)
-    @Column(name = "free_until")
-    private Date freeUntil;
-
     @Column(name = "blocked")
     private Boolean blocked = false;
 

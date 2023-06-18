@@ -148,7 +148,10 @@ public class PorteiroServiceImpl implements PorteiroService {
         Date requestEndDate = bookingRequest.getReservedUntil();
 
         Place place = verifyPlaceForBooking(bookingRequest.getPlace().getId());
-        verifyBookingDates(requestStartDate, requestEndDate, place);
+        Booking existingBookingForPlace = bookingRepository.findByPlace(place);
+        if (existingBookingForPlace != null) {
+            verifyBookingDates(requestStartDate, requestEndDate, existingBookingForPlace);
+        }
 
         // Fetch resident by logged user
         Resident resident = residentRepository.findByUser_Id(user.getId());
@@ -178,22 +181,27 @@ public class PorteiroServiceImpl implements PorteiroService {
         return place;
     }
 
-    private void verifyBookingDates(Date requestStartDate, Date requestEndDate, Place place) {
+    private void verifyBookingDates(Date requestStartDate, Date requestEndDate, Booking existingBooking) {
         // Check if period is correct:
         if (!requestStartDate.before(requestEndDate))
             throw new BookingCreationException("Booking start date must be before end date");
         if (timeGreaterThan(requestStartDate, requestEndDate, Constants.BOOKING_MAX_HOURS))
             throw new BookingCreationException("Booking time must not exceed six hours");
 
-        // Check if exists another booking for the desired place
-        if (requestStartDate.after(place.getFreeUntil()))
-            throw new BookingCreationException("Booking start time must be before the place's free end period");
-        if (requestStartDate.before(place.getFreeFrom()))
-            throw new BookingCreationException("Booking start time must be after the place's free start period");
-        if (requestEndDate.after(place.getFreeFrom()))
-            throw new BookingCreationException("Booking end time must be after the place's free end period");
-        if (requestEndDate.before(place.getFreeUntil()))
-            throw new BookingCreationException("Booking end time must be before the place's free start period");
+        // Check if exists another booking for the desired place in the same period
+        if (existingBooking.getReservationFrom() == null || existingBooking.getReservationTo() == null)
+            return;
+
+        if (existingBooking.getReservationTo().after(requestEndDate)
+                || existingBooking.getReservationTo().after(requestStartDate)
+                || existingBooking.getReservationFrom().before(requestStartDate)
+                || existingBooking.getReservationFrom().before(requestEndDate))
+            throw new BookingCreationException("Place is not available for chosen date");
+
+    }
+
+    private boolean dateBetween(Date date, Date startDate, Date endDate) {
+        return !(date.before(startDate) || date.after(endDate));
     }
 
     @Override
