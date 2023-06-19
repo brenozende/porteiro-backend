@@ -13,7 +13,7 @@ import java.util.Set;
 
 @Repository
 public interface VisitRepository extends JpaRepository<Visit, Integer> {
-    List<VisitDTO> findByVisitStatusAndVisitor_Resident(EVisitStatus visitStatus, Resident resident);
-    List<VisitDTO> findByVisitStatus(EVisitStatus visitStatus);
+    List<Visit> findByVisitStatusAndVisitor_Resident(EVisitStatus visitStatus, Resident resident);
+    List<Visit> findByVisitStatus(EVisitStatus visitStatus);
     List<Visit> findByVisitStatusAndVisitorIn(EVisitStatus visitStatus, Set<Visitor> visitors);
 }

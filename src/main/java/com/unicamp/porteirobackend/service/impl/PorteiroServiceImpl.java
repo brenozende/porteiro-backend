@@ -361,14 +361,21 @@ public class PorteiroServiceImpl implements PorteiroService {
 
     public List<VisitDTO> findVisitByStatus(EVisitStatus status, User user) {
         if (user.getRoles().stream().anyMatch(r -> r.getName().equals(EUserRole.ADM))
-                || user.getRoles().stream().anyMatch(r -> r.getName().equals(EUserRole.CON)))
-            return visitRepository.findByVisitStatus(status);
+                || user.getRoles().stream().anyMatch(r -> r.getName().equals(EUserRole.CON))) {
+            List<Visit> visits = visitRepository.findByVisitStatus(status);
+            if (visits.isEmpty())
+                return new ArrayList<>();
+            return visits.stream().map(VisitDTO::new).toList();
+        }
 
         Resident resident = residentRepository.findByUser_Id(user.getId());
         if (resident == null)
             throw new BookingCreationException("Current user is not a resident.");
 
-        return visitRepository.findByVisitStatusAndVisitor_Resident(status, resident);
+        List<Visit> visits = visitRepository.findByVisitStatusAndVisitor_Resident(status, resident);
+        if (visits.isEmpty())
+            return new ArrayList<>();
+        return visits.stream().map(VisitDTO::new).toList();
     }
 
 }
