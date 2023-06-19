@@ -3,9 +3,12 @@ package com.unicamp.porteirobackend.service.impl;
 import com.unicamp.porteirobackend.constants.Constants;
 import com.unicamp.porteirobackend.dto.BookingDTO;
 import com.unicamp.porteirobackend.dto.UserDTO;
+import com.unicamp.porteirobackend.dto.VisitDTO;
+import com.unicamp.porteirobackend.dto.VisitorDTO;
 import com.unicamp.porteirobackend.dto.request.RegisterForm;
 import com.unicamp.porteirobackend.entity.*;
 import com.unicamp.porteirobackend.enums.EUserRole;
+import com.unicamp.porteirobackend.enums.EVisitStatus;
 import com.unicamp.porteirobackend.exception.BookingCreationException;
 import com.unicamp.porteirobackend.exception.BookingUpdateException;
 import com.unicamp.porteirobackend.repository.*;
@@ -13,13 +16,19 @@ import com.unicamp.porteirobackend.security.services.UserDetailsImpl;
 import com.unicamp.porteirobackend.service.PorteiroService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class PorteiroServiceImpl implements PorteiroService {
+    @Autowired
+    private VisitorRepository visitorRepository;
+    @Autowired
+    private VisitRepository visitRepository;
     @Autowired
     private BookingRepository bookingRepository;
     @Autowired
@@ -199,11 +208,6 @@ public class PorteiroServiceImpl implements PorteiroService {
             throw new BookingCreationException("Place is not available for chosen date");
 
     }
-
-    private boolean dateBetween(Date date, Date startDate, Date endDate) {
-        return !(date.before(startDate) || date.after(endDate));
-    }
-
     @Override
     public BookingDTO updateBooking(Integer bookingId, BookingDTO bookingRequest, User user) {
         Date startDate = bookingRequest.getReservedFrom();
@@ -219,6 +223,7 @@ public class PorteiroServiceImpl implements PorteiroService {
 
         booking.setReservationFrom(startDate);
         booking.setReservationTo(endDate);
+        bookingRepository.save(booking);
         return new BookingDTO(booking);
     }
 
@@ -248,4 +253,122 @@ public class PorteiroServiceImpl implements PorteiroService {
         return roles.stream().anyMatch(r -> r.getName().equals(EUserRole.ADM)) ||
                 roles.stream().anyMatch(r -> r.getName().equals(EUserRole.CON));
     }
+
+    @Override
+    public List<VisitDTO> getVisitsForUser(User user) {
+        Set<Role> roles = user.getRoles();
+        List<Visit> visits;
+        List<VisitDTO> visitsDTO = new ArrayList<>();
+        if (roles.stream().anyMatch(r -> r.getName().equals(EUserRole.ADM))){
+            visits = visitRepository.findAll();
+            for (Visit v : visits) {
+                VisitDTO dto = new VisitDTO(v);
+                visitsDTO.add(dto);
+            }
+        } else {
+            Resident resident = residentRepository.findByUser_Id(user.getId());
+            if (resident == null)
+                return new ArrayList<>(); // Mudar para erro de permissão.
+            Set<Visitor> visitors = resident.getVisitors();
+            // Buscar visitas pending que deem match com a lista de visitors
+            visits = visitRepository.findByVisitStatusAndVisitorIn(EVisitStatus.PENDING, visitors);
+            for (Visit v : visits) {
+                VisitDTO dto = new VisitDTO(v);
+                visitsDTO.add(dto);
+            }
+        }
+        return visitsDTO;
+    }
+
+    public VisitDTO getVisitById(Integer id, User user) {
+        Set<Role> roles = user.getRoles();
+        if (roles.stream().anyMatch(r -> r.getName().equals(EUserRole.ADM))) {
+            Optional<Visit> visit = visitRepository.findById(id);
+            return visit.map(VisitDTO::new).orElse(null);
+        }
+
+        Resident resident = residentRepository.findByUser_Id(user.getId());
+        Optional<Visit> visitOptional = visitRepository.findById(id);
+        if (visitOptional.isEmpty())
+            return null;
+        if (resident.getVisitors().contains(visitOptional.get().getVisitor()))
+            return new VisitDTO(visitOptional.get());
+
+        return null;
+    }
+
+    public VisitDTO createVisit(VisitDTO visitRequest, User user){
+        Visit visit = new Visit();
+        Optional<Visitor> visitor = visitorRepository.findById(visitRequest.getVisitor().getId());
+        if (visitor.isEmpty())
+            throw new BookingCreationException("The informed visitor is not registered");
+
+        Resident resident = residentRepository.findByUser_Id(user.getId());
+        if (resident == null)
+            throw new BookingCreationException("Current user is not a resident");
+
+        if (!visitor.get().getResident().equals(resident))
+            throw new BookingCreationException("Visitor not registered for this resident");
+
+        visit.setVisitor(visitor.get());
+        visit.setCreatedAt(new Date());
+        visit.setUpdatedAt(null);
+        visit.setVisitStatus(EVisitStatus.PENDING);
+        visitRepository.save(visit);
+        return new VisitDTO(visit);
+    }
+
+    public VisitDTO updateVisit(Integer id, VisitDTO visitRequest, User user) {
+        Optional<Visit> visitOptional = visitRepository.findById(id);
+
+        if (visitOptional.isEmpty())
+            throw new BookingUpdateException("Visit with informed id not found: " + id);
+
+        Visit visit = visitOptional.get();
+
+        Optional<Visitor> visitor = visitorRepository.findById(visitRequest.getVisitor().getId());
+        if (visitor.isPresent()){
+            Resident resident = residentRepository.findByUser_Id(user.getId());
+            if (resident == null)
+                throw new BookingCreationException("Current user is not a resident.");
+            if (!visitor.get().getResident().equals(resident))
+                throw new BookingCreationException("Cannot update other resident's visit.");
+            visit.setVisitor(visitor.get());
+        }
+
+        visit.setVisitStatus(visitRequest.getVisitStatus());
+        visit.setUpdatedAt(new Date());
+        visitRepository.save(visit);
+        return new VisitDTO(visit);
+    }
+
+    public void deleteVisit(Integer id, User user){
+        Optional<Visit> visitOptional = visitRepository.findById(id);
+
+        if (visitOptional.isEmpty())
+            throw new BookingUpdateException("Visit with informed id not found: " + id);
+
+        Resident resident = residentRepository.findByUser_Id(user.getId());
+        if (resident == null)
+            throw new BookingCreationException("Current user is not a resident.");
+
+        Visit visit = visitOptional.get();
+        if (!visit.getVisitor().getResident().equals(resident))
+            throw new BookingCreationException("Cannot delete other resident's visit.");
+
+        visitRepository.delete(visit);
+    }
+
+    public List<VisitDTO> findVisitByStatus(EVisitStatus status, User user) {
+        if (user.getRoles().stream().anyMatch(r -> r.getName().equals(EUserRole.ADM))
+                || user.getRoles().stream().anyMatch(r -> r.getName().equals(EUserRole.CON)))
+            return visitRepository.findByVisitStatus(status);
+
+        Resident resident = residentRepository.findByUser_Id(user.getId());
+        if (resident == null)
+            throw new BookingCreationException("Current user is not a resident.");
+
+        return visitRepository.findByVisitStatusAndVisitor_Resident(status, resident);
+    }
+
 }

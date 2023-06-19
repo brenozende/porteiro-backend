@@ -2,10 +2,12 @@ package com.unicamp.porteirobackend.service;
 
 import com.unicamp.porteirobackend.dto.BookingDTO;
 import com.unicamp.porteirobackend.dto.UserDTO;
+import com.unicamp.porteirobackend.dto.VisitDTO;
 import com.unicamp.porteirobackend.dto.request.RegisterForm;
 import com.unicamp.porteirobackend.entity.Resident;
 import com.unicamp.porteirobackend.entity.User;
 import com.unicamp.porteirobackend.entity.Visitor;
+import com.unicamp.porteirobackend.enums.EVisitStatus;
 import com.unicamp.porteirobackend.security.services.UserDetailsImpl;
 import org.springframework.stereotype.Service;
 
@@ -33,4 +35,16 @@ public interface PorteiroService {
     BookingDTO updateBooking(Integer bookingId, BookingDTO bookingRequest, User user);
 
     void deleteBooking(Integer id, User user);
+
+    List<VisitDTO> getVisitsForUser(User user);
+
+    VisitDTO getVisitById(Integer id, User user);
+
+    VisitDTO createVisit(VisitDTO visitRequest, User user);
+
+    VisitDTO updateVisit(Integer id, VisitDTO visitRequest, User user);
+
+    void deleteVisit(Integer id, User user);
+
+    List<VisitDTO> findVisitByStatus(EVisitStatus status, User user);
 }
