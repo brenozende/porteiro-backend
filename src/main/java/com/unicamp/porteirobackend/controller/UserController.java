@@ -6,22 +6,13 @@ import com.unicamp.porteirobackend.dto.UserDTO;
 import com.unicamp.porteirobackend.service.PorteiroService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class UserController {
-
-    @GetMapping("/all")
-    public String allAccess(){
-        return "Public content";
-    }
-
-    @GetMapping("/user")
-    public String userAccess(){
-        return "User content";
-    }
 
     @Autowired
     private PorteiroService porteiroService;
@@ -31,6 +22,7 @@ public class UserController {
         return porteiroService.findAllUsers();
     }
 
+    @PreAuthorize("#id == authentication.principal.id")
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getUserById(@PathVariable int id){
         UserDTO user = porteiroService.getUserById(id);
@@ -39,6 +31,7 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    @PreAuthorize("hasAnyAuthority('ADM') and #id == authentication.principal.id")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable int id){
         boolean deleted = porteiroService.deleteUser(id);
