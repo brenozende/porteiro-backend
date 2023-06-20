@@ -25,7 +25,7 @@ public class PlaceController {
 
 
     @GetMapping
-    public ResponseEntity<?> getAllPlaces() {
+    public ResponseEntity<List<PlaceDTO>> getAllPlaces() {
         List<PlaceDTO> places = porteiroService.getAllPlaces();
         if (places.isEmpty())
             return ResponseEntity.notFound().build();
@@ -34,7 +34,7 @@ public class PlaceController {
 
     @PreAuthorize("hasAuthority('ADM')")
     @PostMapping
-    public ResponseEntity<?> createPlace(@RequestBody PlaceDTO placeRequest) {
+    public ResponseEntity<PlaceDTO> createPlace(@RequestBody PlaceDTO placeRequest) {
         PlaceDTO place = porteiroService.createPlace(placeRequest);
         if (place == null)
             return ResponseEntity.internalServerError().build();
@@ -42,7 +42,7 @@ public class PlaceController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getPlaceById(@PathVariable Integer id) {
+    public ResponseEntity<PlaceDTO> getPlaceById(@PathVariable Integer id) {
         PlaceDTO place = porteiroService.getPlaceById(id);
         if (place == null)
             return ResponseEntity.notFound().build();
@@ -51,7 +51,7 @@ public class PlaceController {
 
     @PreAuthorize("hasAuthority('ADM')")
     @PutMapping("/{id}")
-    public ResponseEntity<?> updatePlace(@PathVariable Integer id, @RequestBody PlaceDTO placeUpdateRequest) {
+    public ResponseEntity<PlaceDTO> updatePlace(@PathVariable Integer id, @RequestBody PlaceDTO placeUpdateRequest) {
         PlaceDTO place = porteiroService.updatePlace(id, placeUpdateRequest);
         if (place == null)
             return ResponseEntity.notFound().build();
@@ -60,12 +60,8 @@ public class PlaceController {
 
     @PreAuthorize("hasAuthority('ADM')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deletePlace(@PathVariable Integer id) {
-        try {
-            porteiroService.deletePlace(id);
-        } catch (PorteiroException e) {
-            return ResponseEntity.status(e.getStatus()).body(e.getErrorMsg());
-        }
+    public ResponseEntity<Void> deletePlace(@PathVariable Integer id) {
+        porteiroService.deletePlace(id);
         return ResponseEntity.noContent().build();
     }
 }

@@ -6,8 +6,6 @@ import com.unicamp.porteirobackend.dto.request.RegisterForm;
 import com.unicamp.porteirobackend.entity.*;
 import com.unicamp.porteirobackend.enums.EUserRole;
 import com.unicamp.porteirobackend.enums.EVisitStatus;
-import com.unicamp.porteirobackend.exception.BookingCreationException;
-import com.unicamp.porteirobackend.exception.BookingUpdateException;
 import com.unicamp.porteirobackend.exception.PorteiroException;
 import com.unicamp.porteirobackend.repository.*;
 import com.unicamp.porteirobackend.security.services.UserDetailsImpl;
@@ -15,12 +13,10 @@ import com.unicamp.porteirobackend.service.PorteiroService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -210,25 +206,25 @@ public class PorteiroServiceImpl implements PorteiroService {
     }
 
     @Override
-    public Resident addVisitors(Integer residentId, List<Visitor> visitors) {
+    public ResidentDTO addVisitors(Integer residentId, List<VisitorDTO> visitors) {
         Optional<Resident> residentOptional = residentRepository.findById(residentId);
         if (residentOptional.isEmpty())
             return null;
         Resident resident = residentOptional.get();
-        for (Visitor v : visitors) {
-            resident.getVisitors().add(v);
+        for (VisitorDTO v : visitors) {
+            resident.getVisitors().add(new Visitor(v, resident));
         }
-        return resident;
+        return new ResidentDTO(resident);
     }
 
     @Override
-    public List<Visitor> findVisitorsByResident(Integer residentId) {
+    public List<VisitorDTO> findVisitorsByResident(Integer residentId) {
 
         Optional<Resident> residentOptional = residentRepository.findById(residentId);
         if (residentOptional.isEmpty())
             return new ArrayList<>();
         Resident resident = residentOptional.get();
-        return resident.getVisitors().stream().toList();
+        return resident.getVisitors().stream().map(VisitorDTO::new).toList();
     }
 
     @Override
@@ -317,9 +313,9 @@ public class PorteiroServiceImpl implements PorteiroService {
     private void verifyBookingDates(Date requestStartDate, Date requestEndDate, Booking existingBooking) {
         // Check if period is correct:
         if (!requestStartDate.before(requestEndDate))
-            throw new BookingCreationException("Booking start date must be before end date");
+            throw new PorteiroException(HttpStatus.BAD_REQUEST, "Booking start date must be before end date");
         if (timeGreaterThan(requestStartDate, requestEndDate, Constants.BOOKING_MAX_HOURS))
-            throw new BookingCreationException("Booking time must not exceed six hours");
+            throw new PorteiroException(HttpStatus.BAD_REQUEST, "Booking time must not exceed six hours");
 
         // Check if exists another booking for the desired place in the same period
         if (existingBooking.getReservationFrom() == null || existingBooking.getReservationTo() == null)
@@ -329,7 +325,7 @@ public class PorteiroServiceImpl implements PorteiroService {
                 || existingBooking.getReservationTo().after(requestStartDate)
                 || existingBooking.getReservationFrom().before(requestStartDate)
                 || existingBooking.getReservationFrom().before(requestEndDate))
-            throw new BookingCreationException("Place is not available for chosen date");
+            throw new PorteiroException(HttpStatus.NOT_FOUND, "Place is not available for chosen date");
 
     }
     @Override

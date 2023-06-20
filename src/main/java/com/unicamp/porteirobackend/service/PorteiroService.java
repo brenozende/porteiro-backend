@@ -23,9 +23,9 @@ public interface PorteiroService {
 
     ResidentDTO registerResident(RegisterForm form);
 
-    Resident addVisitors(Integer residentId, List<Visitor> visitors);
+    ResidentDTO addVisitors(Integer residentId, List<VisitorDTO> visitors);
 
-    List<Visitor> findVisitorsByResident(Integer residentId);
+    List<VisitorDTO> findVisitorsByResident(Integer residentId);
 
     User getUser();
 
