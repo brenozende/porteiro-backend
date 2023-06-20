@@ -7,6 +7,7 @@ import com.unicamp.porteirobackend.service.PorteiroService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,6 +18,7 @@ public class UserController {
     @Autowired
     private PorteiroService porteiroService;
 
+    @PreAuthorize("hasAnyAuthority('ADM', 'CON')")
     @GetMapping
     public List<UserDTO> getAllUsers(){
         return porteiroService.findAllUsers();

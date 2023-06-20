@@ -1,5 +1,6 @@
 package com.unicamp.porteirobackend.controller;
 
+import com.unicamp.porteirobackend.dto.ResidentDTO;
 import com.unicamp.porteirobackend.dto.request.RegisterForm;
 import com.unicamp.porteirobackend.entity.Resident;
 import com.unicamp.porteirobackend.entity.User;
@@ -24,13 +25,9 @@ public class ResidentController {
 
     @PreAuthorize("hasAnyAuthority('ADM', 'CON')")
     @PostMapping("/register")
-    public ResponseEntity<Resident> registerResident(@RequestBody RegisterForm form){
-        UserDetailsImpl user = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        form.setFilledBy(user.getUsername());
+    public ResponseEntity<?> registerResident(@RequestBody RegisterForm form){
+        ResidentDTO resident = porteiroService.registerResident(form);
 
-        Resident resident = porteiroService.registerResident(form);
-        if (resident == null)
-            return ResponseEntity.badRequest().build();
 
         return ResponseEntity.created(UriComponentsBuilder.fromPath("/{id}").buildAndExpand(resident.getId()).toUri()).body(resident);
     }

@@ -1,14 +1,13 @@
 package com.unicamp.porteirobackend.service;
 
-import com.unicamp.porteirobackend.dto.BookingDTO;
-import com.unicamp.porteirobackend.dto.UserDTO;
-import com.unicamp.porteirobackend.dto.VisitDTO;
+import com.unicamp.porteirobackend.dto.*;
 import com.unicamp.porteirobackend.dto.request.RegisterForm;
 import com.unicamp.porteirobackend.entity.Resident;
 import com.unicamp.porteirobackend.entity.User;
 import com.unicamp.porteirobackend.entity.Visitor;
 import com.unicamp.porteirobackend.enums.EVisitStatus;
 import com.unicamp.porteirobackend.security.services.UserDetailsImpl;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,29 +21,73 @@ public interface PorteiroService {
 
     UserDTO getUserById(int id);
 
-    Resident registerResident(RegisterForm form);
+    ResidentDTO registerResident(RegisterForm form);
 
     Resident addVisitors(Integer residentId, List<Visitor> visitors);
 
     List<Visitor> findVisitorsByResident(Integer residentId);
 
-    User getUser(UserDetailsImpl userDetails);
+    User getUser();
 
-    BookingDTO createBooking(BookingDTO booking, User user);
+    BookingDTO createBooking(BookingDTO booking);
 
-    BookingDTO updateBooking(Integer bookingId, BookingDTO bookingRequest, User user);
+    BookingDTO updateBooking(Integer bookingId, BookingDTO bookingRequest);
 
-    void deleteBooking(Integer id, User user);
+    void deleteBooking(Integer id);
 
-    List<VisitDTO> getVisitsForUser(User user);
+    VisitDTO getVisitById(Integer id);
 
-    VisitDTO getVisitById(Integer id, User user);
+    VisitDTO createVisit(VisitDTO visitRequest);
 
-    VisitDTO createVisit(VisitDTO visitRequest, User user);
+    VisitDTO updateVisit(Integer id, VisitDTO visitRequest);
 
-    VisitDTO updateVisit(Integer id, VisitDTO visitRequest, User user);
+    void deleteVisit(Integer id);
 
-    void deleteVisit(Integer id, User user);
+    List<VisitDTO> findVisitByStatus(EVisitStatus status);
 
-    List<VisitDTO> findVisitByStatus(EVisitStatus status, User user);
+    List<BookingDTO> getAllBookings();
+
+    BookingDTO getBookingById(Integer id);
+
+    List<CommunicationDTO> getAllCommunications();
+
+    CommunicationDTO createCommunication(CommunicationDTO request);
+
+    CommunicationDTO getCommunicationById(Integer id);
+
+    CommunicationDTO updateCommunication(Integer id, CommunicationDTO communicationRequest);
+
+    void deleteCommunication(Integer id);
+
+    List<PlaceDTO> getAllPlaces();
+
+    PlaceDTO createPlace(PlaceDTO placeRequest);
+
+    PlaceDTO getPlaceById(Integer id);
+
+    PlaceDTO updatePlace(Integer id, PlaceDTO placeUpdateRequest);
+
+    void deletePlace(Integer id);
+
+    List<VisitDTO> getVisits();
+
+    List<VisitorDTO> getAllVisitors();
+
+    VisitorDTO getVisitorById(Integer id);
+
+    VisitorDTO createVisitor(VisitorDTO visitorRequest);
+
+    VisitorDTO updateVisitor(Integer id, VisitorDTO visitorRequest);
+
+    void deleteVisitor(Integer id);
+
+    ApartmentDTO createApartment(ApartmentDTO apartmentRequest);
+
+    ApartmentDTO updateApartment(Integer id, ApartmentDTO apartmentRequest);
+
+    List<ApartmentDTO> getApartments();
+
+    ApartmentDTO getApartmentById(Integer id);
+
+    void deleteApartment(Integer id);
 }

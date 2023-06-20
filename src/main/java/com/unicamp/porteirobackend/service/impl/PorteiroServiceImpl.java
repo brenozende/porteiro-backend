@@ -1,22 +1,22 @@
 package com.unicamp.porteirobackend.service.impl;
 
 import com.unicamp.porteirobackend.constants.Constants;
-import com.unicamp.porteirobackend.dto.BookingDTO;
-import com.unicamp.porteirobackend.dto.UserDTO;
-import com.unicamp.porteirobackend.dto.VisitDTO;
-import com.unicamp.porteirobackend.dto.VisitorDTO;
+import com.unicamp.porteirobackend.dto.*;
 import com.unicamp.porteirobackend.dto.request.RegisterForm;
 import com.unicamp.porteirobackend.entity.*;
 import com.unicamp.porteirobackend.enums.EUserRole;
 import com.unicamp.porteirobackend.enums.EVisitStatus;
 import com.unicamp.porteirobackend.exception.BookingCreationException;
 import com.unicamp.porteirobackend.exception.BookingUpdateException;
+import com.unicamp.porteirobackend.exception.PorteiroException;
 import com.unicamp.porteirobackend.repository.*;
 import com.unicamp.porteirobackend.security.services.UserDetailsImpl;
 import com.unicamp.porteirobackend.service.PorteiroService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -25,6 +25,12 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class PorteiroServiceImpl implements PorteiroService {
+    @Autowired
+    private EmergencyContactRepository emergencyContactRepository;
+    @Autowired
+    private AddressRepository addressRepository;
+    @Autowired
+    private CommunicationsRepository communicationsRepository;
     @Autowired
     private VisitorRepository visitorRepository;
     @Autowired
@@ -42,36 +48,114 @@ public class PorteiroServiceImpl implements PorteiroService {
     private UserRepository userRepository;
 
     @Override
-    public Resident registerResident(RegisterForm form){
-        if (form == null)
-            return null;
+    public ApartmentDTO createApartment(ApartmentDTO apartmentRequest) {
+        Apartment apartment = new Apartment();
+        apartment.setBlock(apartmentRequest.getBlock());
+        apartment.setFloor(apartmentRequest.getFloor());
+        apartment.setRealEstate(apartmentRequest.getRealEstate());
+        apartment.setNumber(apartmentRequest.getNumber());
+
+        Optional<Address> addressOptional = addressRepository.findById(apartmentRequest.getAddress().getId());
+
+        if (addressOptional.isPresent())
+            apartment.setAddress(addressOptional.get());
+        else {
+            Address address = new Address(apartmentRequest.getAddress());
+            addressRepository.save(address);
+        }
+
+        apartmentRepository.save(apartment);
+        return new ApartmentDTO(apartment);
+    }
+
+    @Override
+    public ApartmentDTO updateApartment(Integer id, ApartmentDTO apartmentRequest) {
+        Optional<Apartment> apartmentOptional = apartmentRepository.findById(id);
+        if (apartmentOptional.isEmpty())
+            throw new PorteiroException(HttpStatus.NOT_FOUND, "Apartment not found with id: " + id);
+        Apartment apartment = apartmentOptional.get();
+        apartment.setNumber(apartmentRequest.getNumber());
+        apartment.setBlock(apartmentRequest.getBlock());
+        apartment.setFloor(apartmentRequest.getFloor());
+        apartment.setRealEstate(apartmentRequest.getRealEstate());
+
+        Optional<Address> addressOptional = addressRepository.findById(apartmentRequest.getAddress().getId());
+        if (addressOptional.isPresent())
+            apartment.setAddress(addressOptional.get());
+        else {
+            Address address = new Address(apartmentRequest.getAddress());
+            addressRepository.save(address);
+            apartment.setAddress(address);
+        }
+
+        apartmentRepository.save(apartment);
+        return new ApartmentDTO(apartment);
+    }
+
+    @Override
+    public List<ApartmentDTO> getApartments() {
+        List<Apartment> apartments = apartmentRepository.findAll();
+        if (apartments.isEmpty())
+            throw new PorteiroException(HttpStatus.NOT_FOUND, "No apartment found.");
+
+        return apartments.stream().map(ApartmentDTO::new).toList();
+    }
+
+    @Override
+    public ApartmentDTO getApartmentById(Integer id) {
+        Optional<Apartment> apartmentOptional = apartmentRepository.findById(id);
+        if (apartmentOptional.isEmpty())
+            throw new PorteiroException(HttpStatus.NOT_FOUND, "Apartment not found with id: " + id);
+
+        return new ApartmentDTO(apartmentOptional.get());
+    }
+
+    @Override
+    public void deleteApartment(Integer id) {
+        Optional<Apartment> apartmentOptional = apartmentRepository.findById(id);
+        if (apartmentOptional.isEmpty())
+            throw new PorteiroException(HttpStatus.NOT_FOUND, "Apartment not found with id: " + id);
+
+        apartmentRepository.delete(apartmentOptional.get());
+    }
+
+    @Override
+    public ResidentDTO registerResident(RegisterForm form){
+        validateRegisterForm(form);
+
+        User user = getUser();
+        form.setFilledBy(user.getUsername());
+
         Resident resident = new Resident();
         resident.setName(form.getName());
         resident.setDocument(form.getDocument());
         resident.setPhoneNumber(form.getPhoneNumber());
         resident.setCreatedAt(new Date());
-        resident.setUpdatedAt(new Date());
+        resident.setUpdatedAt(null);
         resident.setOwner(form.isOwner());
 
         Set<Role> roles = new HashSet<>();
         roles.add(new Role(EUserRole.RES));
 
-        User user = new User();
-        user.setEmail(form.getEmail());
-        user.setRoles(roles);
+        User residentUser = new User();
+        residentUser.setEmail(form.getEmail());
+        residentUser.setRoles(roles);
         //TODO: gerar username e senha p/ morador novo
-        user.setUsername(form.getEmail());
-        user.setPassword("123456");
-        resident.setUser(user);
+        residentUser.setUsername(form.getEmail());
+        residentUser.setPassword("123456");
+        userRepository.save(residentUser);
+        resident.setUser(residentUser);
 
         Set<Visitor> visitors = new HashSet<>();
         form.getVisitors().forEach(v -> {
             Visitor visitor = new Visitor(v, resident);
             visitors.add(visitor);
         });
+        visitorRepository.saveAll(visitors);
         resident.setVisitors(visitors);
 
         Address mailingAddress = new Address(form.getMailingAddress());
+        addressRepository.save(mailingAddress);
         resident.setMailAddress(mailingAddress);
 
         Apartment apartment = apartmentRepository.findByNumber(form.getApartment());
@@ -83,9 +167,46 @@ public class PorteiroServiceImpl implements PorteiroService {
             EmergencyContact emergencyContact = new EmergencyContact(e, resident);
             emergencyContacts.add(emergencyContact);
         });
+        emergencyContactRepository.saveAll(emergencyContacts);
         resident.setEmergencyContacts(emergencyContacts);
 
-        return resident;
+        residentRepository.save(resident);
+        return new ResidentDTO(resident);
+    }
+
+    private boolean stringNullOrEmpty(String string) {
+        return string == null || string.isEmpty() || string.isBlank();
+    }
+
+    private void validateRegisterForm(RegisterForm form) {
+        if (form == null)
+            throw new PorteiroException(HttpStatus.BAD_REQUEST, "Form must be filled");
+        if (stringNullOrEmpty(form.getName()))
+            throw new PorteiroException(HttpStatus.BAD_REQUEST, "Name must be provided");
+        if (!validDocument(form.getDocument()))
+            throw new PorteiroException(HttpStatus.BAD_REQUEST, "Document must be not empty and 11 characters long");
+        if (stringNullOrEmpty(form.getEmail()))
+            throw new PorteiroException(HttpStatus.BAD_REQUEST, "E-mail must be provided");
+        if (form.getApartment() == null)
+            throw new PorteiroException(HttpStatus.BAD_REQUEST, "Apartment number must be provided");
+    }
+
+    private boolean validDocument(String document) {
+        return document != null && document.length() == 11;
+    }
+
+    @Override
+    public List<BookingDTO> getAllBookings() {
+        List<Booking> bookings = bookingRepository.findAll();
+        if (bookings.isEmpty())
+            return new ArrayList<>();
+        return bookings.stream().map(BookingDTO::new).toList();
+    }
+
+    @Override
+    public BookingDTO getBookingById(Integer id) {
+        Optional<Booking> booking = bookingRepository.findById(id);
+        return booking.map(BookingDTO::new).orElse(null);
     }
 
     @Override
@@ -137,7 +258,8 @@ public class PorteiroServiceImpl implements PorteiroService {
     }
 
     @Override
-    public User getUser(UserDetailsImpl userDetails) {
+    public User getUser() {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Optional<User> user = userRepository.findByUsername(userDetails.getUsername());
         return user.orElse(null);
     }
@@ -152,7 +274,9 @@ public class PorteiroServiceImpl implements PorteiroService {
     }
 
     @Override
-    public BookingDTO createBooking(BookingDTO bookingRequest, User user) {
+    public BookingDTO createBooking(BookingDTO bookingRequest) {
+
+        User user = getUser();
         Date requestStartDate = bookingRequest.getReservedFrom();
         Date requestEndDate = bookingRequest.getReservedUntil();
 
@@ -165,14 +289,14 @@ public class PorteiroServiceImpl implements PorteiroService {
         // Fetch resident by logged user
         Resident resident = residentRepository.findByUser_Id(user.getId());
         if (resident == null)
-            throw new BookingCreationException("Resident not found for user");
+            throw new PorteiroException(HttpStatus.NOT_FOUND, "Resident not found for user");
 
         Booking booking = new Booking();
         booking.setResident(resident);
         booking.setPlace(place);
         booking.setReservationFrom(bookingRequest.getReservedFrom());
         booking.setReservationTo(bookingRequest.getReservedUntil());
-        bookingRepository.save(booking);
+        booking = bookingRepository.save(booking);
 
         return new BookingDTO(booking);
     }
@@ -181,12 +305,12 @@ public class PorteiroServiceImpl implements PorteiroService {
         // Check if desired place exists:
         Optional<Place> placeOptional = placeRepository.findById(placeId);
         if (placeOptional.isEmpty())
-            throw new BookingCreationException("Desired place doesn't exist");
+            throw new PorteiroException(HttpStatus.BAD_REQUEST, "Desired place doesn't exist");
 
         // Check if desired place is available
         Place place = placeOptional.get();
         if (place.getBlocked())
-            throw new BookingCreationException("Desired place is not available");
+            throw new PorteiroException(HttpStatus.BAD_REQUEST, "Desired place is not available");
         return place;
     }
 
@@ -209,17 +333,19 @@ public class PorteiroServiceImpl implements PorteiroService {
 
     }
     @Override
-    public BookingDTO updateBooking(Integer bookingId, BookingDTO bookingRequest, User user) {
+    public BookingDTO updateBooking(Integer bookingId, BookingDTO bookingRequest) {
+        User user = getUser();
+
         Date startDate = bookingRequest.getReservedFrom();
         Date endDate = bookingRequest.getReservedUntil();
 
         Optional<Booking> existingBooking = bookingRepository.findById(bookingId);
         if (existingBooking.isEmpty())
-            throw new BookingUpdateException("Booking with informed id doesn't exist: " + bookingId);
+            throw new PorteiroException(HttpStatus.NOT_FOUND ,"Booking with informed id doesn't exist: " + bookingId);
 
         Booking booking = existingBooking.get();
         if (!booking.getResident().getUser().equals(user))
-            throw new BookingUpdateException("Cannot update another user's booking");
+            throw new PorteiroException(HttpStatus.UNAUTHORIZED, "Cannot update another user's booking");
 
         booking.setReservationFrom(startDate);
         booking.setReservationTo(endDate);
@@ -235,15 +361,16 @@ public class PorteiroServiceImpl implements PorteiroService {
     }
 
     @Override
-    public void deleteBooking(Integer bookingId, User user) {
+    public void deleteBooking(Integer bookingId) {
+        User user = getUser();
 
         Optional<Booking> existingBooking = bookingRepository.findById(bookingId);
         if (existingBooking.isEmpty())
-            throw new BookingUpdateException("Booking with informed id doesn't exist: " + bookingId);
+            throw new PorteiroException(HttpStatus.NOT_FOUND, "Booking with informed id doesn't exist: " + bookingId);
 
         Booking booking = existingBooking.get();
         if (!booking.getResident().getUser().equals(user) || !canUserDelete(user))
-            throw new BookingUpdateException("Cannot delete another user's booking");
+            throw new PorteiroException(HttpStatus.UNAUTHORIZED, "Cannot delete another user's booking");
 
         bookingRepository.delete(booking);
     }
@@ -255,32 +382,128 @@ public class PorteiroServiceImpl implements PorteiroService {
     }
 
     @Override
-    public List<VisitDTO> getVisitsForUser(User user) {
+    public List<CommunicationDTO> getAllCommunications() {
+        List<Communications> communications = communicationsRepository.findAll();
+        if (communications.isEmpty())
+            return new ArrayList<>();
+        return communications.stream().map(CommunicationDTO::new).toList();
+    }
+
+    @Override
+    public CommunicationDTO createCommunication(CommunicationDTO request){
+        User user = getUser();
+
+        Communications communications = new Communications();
+        communications.setMessage(request.getMessage());
+        communications.setDate(new Date());
+        communications.setFromUser(user);
+        communications = communicationsRepository.save(communications);
+        return new CommunicationDTO(communications);
+    }
+
+    @Override
+    public CommunicationDTO getCommunicationById(Integer id) {
+        Optional<Communications> communications = communicationsRepository.findById(id);
+        return communications.map(CommunicationDTO::new).orElse(null);
+    }
+
+    @Override
+    public CommunicationDTO updateCommunication(Integer id, CommunicationDTO communicationRequest) {
+        Optional<Communications> optionalCommunications = communicationsRepository.findById(id);
+        if (optionalCommunications.isEmpty())
+            throw new PorteiroException(HttpStatus.NOT_FOUND, "Communication not found with id: " + id);
+
+        Communications existingCommunication = optionalCommunications.get();
+        User user = getUser();
+        if (!existingCommunication.getFromUser().equals(user))
+            throw new PorteiroException(HttpStatus.UNAUTHORIZED, "Cannot update other user's communication");
+
+        existingCommunication.setMessage(communicationRequest.getMessage());
+        existingCommunication.setDate(new Date());
+        communicationsRepository.save(existingCommunication);
+        return new CommunicationDTO(existingCommunication);
+    }
+
+    @Override
+    public void deleteCommunication(Integer id) {
+        User user = getUser();
+
+        Optional<Communications> optionalCommunications = communicationsRepository.findById(id);
+        if (optionalCommunications.isEmpty())
+            throw new PorteiroException(HttpStatus.NOT_FOUND, "Communication not found with id: " + id);
+        Communications existingCommunication = optionalCommunications.get();
+
+        if (!existingCommunication.getFromUser().equals(user))
+            throw new PorteiroException(HttpStatus.UNAUTHORIZED, "Cannot delete other user's communication");
+
+        communicationsRepository.delete(existingCommunication);
+    }
+
+    @Override
+    public List<PlaceDTO> getAllPlaces() {
+        List<Place> places = placeRepository.findAll();
+        if (places.isEmpty())
+            return new ArrayList<>();
+        return places.stream().map(PlaceDTO::new).toList();
+    }
+
+    @Override
+    public PlaceDTO createPlace(PlaceDTO placeRequest) {
+        Place place = new Place();
+        place.setBlocked(false);
+        place.setName(placeRequest.getName());
+        place = placeRepository.save(place);
+        return new PlaceDTO(place);
+    }
+
+    @Override
+    public PlaceDTO getPlaceById(Integer id) {
+        Optional<Place> place = placeRepository.findById(id);
+        return place.map(PlaceDTO::new).orElse(null);
+    }
+
+    @Override
+    public PlaceDTO updatePlace(Integer id, PlaceDTO placeUpdateRequest) {
+        Optional<Place> optionalPlace = placeRepository.findById(id);
+        if (optionalPlace.isEmpty())
+            return null;
+        Place place = optionalPlace.get();
+        place.setName(placeUpdateRequest.getName());
+        place.setBlocked(placeUpdateRequest.getBlocked());
+        return new PlaceDTO(place);
+    }
+
+    @Override
+    public void deletePlace(Integer id) {
+        Optional<Place> placeOptional = placeRepository.findById(id);
+        if (placeOptional.isEmpty())
+            throw new PorteiroException(HttpStatus.NOT_FOUND, "Place not found with id: " + id);
+        Place place = placeOptional.get();
+        placeRepository.delete(place);
+    }
+
+    @Override
+    public List<VisitDTO> getVisits() {
+        User user = getUser();
         Set<Role> roles = user.getRoles();
         List<Visit> visits;
-        List<VisitDTO> visitsDTO = new ArrayList<>();
         if (roles.stream().anyMatch(r -> r.getName().equals(EUserRole.ADM))){
-            visits = visitRepository.findAll();
-            for (Visit v : visits) {
-                VisitDTO dto = new VisitDTO(v);
-                visitsDTO.add(dto);
-            }
+            visits = visitRepository.findByVisitStatus(EVisitStatus.PENDING);
         } else {
             Resident resident = residentRepository.findByUser_Id(user.getId());
             if (resident == null)
-                return new ArrayList<>(); // Mudar para erro de permissão.
+                throw new PorteiroException(HttpStatus.FORBIDDEN, "Current user is not resident or admin.");
             Set<Visitor> visitors = resident.getVisitors();
-            // Buscar visitas pending que deem match com a lista de visitors
             visits = visitRepository.findByVisitStatusAndVisitorIn(EVisitStatus.PENDING, visitors);
-            for (Visit v : visits) {
-                VisitDTO dto = new VisitDTO(v);
-                visitsDTO.add(dto);
-            }
         }
-        return visitsDTO;
+        if (visits.isEmpty())
+            return new ArrayList<>();
+        return visits.stream().map(VisitDTO::new).toList();
     }
 
-    public VisitDTO getVisitById(Integer id, User user) {
+    @Override
+    public VisitDTO getVisitById(Integer id) {
+        User user = getUser();
         Set<Role> roles = user.getRoles();
         if (roles.stream().anyMatch(r -> r.getName().equals(EUserRole.ADM))) {
             Optional<Visit> visit = visitRepository.findById(id);
@@ -291,24 +514,26 @@ public class PorteiroServiceImpl implements PorteiroService {
         Optional<Visit> visitOptional = visitRepository.findById(id);
         if (visitOptional.isEmpty())
             return null;
-        if (resident.getVisitors().contains(visitOptional.get().getVisitor()))
-            return new VisitDTO(visitOptional.get());
+        if (!resident.getVisitors().contains(visitOptional.get().getVisitor()))
+            throw new PorteiroException(HttpStatus.BAD_REQUEST, "Visitor is not registered.");
 
-        return null;
+        return new VisitDTO(visitOptional.get());
     }
 
-    public VisitDTO createVisit(VisitDTO visitRequest, User user){
+    @Override
+    public VisitDTO createVisit(VisitDTO visitRequest){
+        User user = getUser();
         Visit visit = new Visit();
         Optional<Visitor> visitor = visitorRepository.findById(visitRequest.getVisitor().getId());
         if (visitor.isEmpty())
-            throw new BookingCreationException("The informed visitor is not registered");
+            throw new PorteiroException(HttpStatus.BAD_REQUEST, "The informed visitor is not registered");
 
         Resident resident = residentRepository.findByUser_Id(user.getId());
         if (resident == null)
-            throw new BookingCreationException("Current user is not a resident");
+            throw new PorteiroException(HttpStatus.UNAUTHORIZED, "Current user is not a resident");
 
         if (!visitor.get().getResident().equals(resident))
-            throw new BookingCreationException("Visitor not registered for this resident");
+            throw new PorteiroException(HttpStatus.BAD_REQUEST, "Visitor not registered for this resident");
 
         visit.setVisitor(visitor.get());
         visit.setCreatedAt(new Date());
@@ -318,11 +543,13 @@ public class PorteiroServiceImpl implements PorteiroService {
         return new VisitDTO(visit);
     }
 
-    public VisitDTO updateVisit(Integer id, VisitDTO visitRequest, User user) {
+    @Override
+    public VisitDTO updateVisit(Integer id, VisitDTO visitRequest) {
+        User user = getUser();
         Optional<Visit> visitOptional = visitRepository.findById(id);
 
         if (visitOptional.isEmpty())
-            throw new BookingUpdateException("Visit with informed id not found: " + id);
+            throw new PorteiroException(HttpStatus.NOT_FOUND, "Visit with informed id not found: " + id);
 
         Visit visit = visitOptional.get();
 
@@ -330,9 +557,9 @@ public class PorteiroServiceImpl implements PorteiroService {
         if (visitor.isPresent()){
             Resident resident = residentRepository.findByUser_Id(user.getId());
             if (resident == null)
-                throw new BookingCreationException("Current user is not a resident.");
+                throw new PorteiroException(HttpStatus.UNAUTHORIZED, "Current user is not a resident.");
             if (!visitor.get().getResident().equals(resident))
-                throw new BookingCreationException("Cannot update other resident's visit.");
+                throw new PorteiroException(HttpStatus.FORBIDDEN, "Cannot update other resident's visit.");
             visit.setVisitor(visitor.get());
         }
 
@@ -342,40 +569,153 @@ public class PorteiroServiceImpl implements PorteiroService {
         return new VisitDTO(visit);
     }
 
-    public void deleteVisit(Integer id, User user){
+    @Override
+    public void deleteVisit(Integer id){
+        User user = getUser();
         Optional<Visit> visitOptional = visitRepository.findById(id);
 
         if (visitOptional.isEmpty())
-            throw new BookingUpdateException("Visit with informed id not found: " + id);
+            throw new PorteiroException(HttpStatus.NOT_FOUND, "Visit with informed id not found: " + id);
 
         Resident resident = residentRepository.findByUser_Id(user.getId());
         if (resident == null)
-            throw new BookingCreationException("Current user is not a resident.");
+            throw new PorteiroException(HttpStatus.UNAUTHORIZED, "Current user is not a resident.");
 
         Visit visit = visitOptional.get();
         if (!visit.getVisitor().getResident().equals(resident))
-            throw new BookingCreationException("Cannot delete other resident's visit.");
+            throw new PorteiroException(HttpStatus.FORBIDDEN, "Cannot delete other resident's visit.");
 
         visitRepository.delete(visit);
     }
 
-    public List<VisitDTO> findVisitByStatus(EVisitStatus status, User user) {
+    @Override
+    public List<VisitDTO> findVisitByStatus(EVisitStatus status) {
+        User user = getUser();
         if (user.getRoles().stream().anyMatch(r -> r.getName().equals(EUserRole.ADM))
                 || user.getRoles().stream().anyMatch(r -> r.getName().equals(EUserRole.CON))) {
             List<Visit> visits = visitRepository.findByVisitStatus(status);
             if (visits.isEmpty())
-                return new ArrayList<>();
+                throw new PorteiroException(HttpStatus.NOT_FOUND, "No visits found with status: " + status);
             return visits.stream().map(VisitDTO::new).toList();
         }
 
         Resident resident = residentRepository.findByUser_Id(user.getId());
         if (resident == null)
-            throw new BookingCreationException("Current user is not a resident.");
+            throw new PorteiroException(HttpStatus.UNAUTHORIZED, "Current user is not a resident.");
 
         List<Visit> visits = visitRepository.findByVisitStatusAndVisitor_Resident(status, resident);
         if (visits.isEmpty())
-            return new ArrayList<>();
+            throw new PorteiroException(HttpStatus.NOT_FOUND, "No visits found with status: " + status);
+
         return visits.stream().map(VisitDTO::new).toList();
+    }
+
+    @Override
+    public List<VisitorDTO> getAllVisitors() {
+        User user = getUser();
+        if (user.getRoles().stream().anyMatch(r -> r.getName().equals(EUserRole.ADM))
+                || user.getRoles().stream().anyMatch(r -> r.getName().equals(EUserRole.CON))) {
+            List<Visitor> visitors = visitorRepository.findAll();
+            if (visitors.isEmpty())
+                throw new PorteiroException(HttpStatus.NOT_FOUND, "No visitors found");
+        }
+
+        Resident resident = residentRepository.findByUser_Id(user.getId());
+        if (resident == null)
+            throw new PorteiroException(HttpStatus.UNAUTHORIZED, "Current user is not a resident.");
+
+        List<Visitor> visitors = visitorRepository.findByResident(resident);
+        if (visitors.isEmpty())
+            throw new PorteiroException(HttpStatus.NOT_FOUND, "No visitors found");
+
+        return visitors.stream().map(VisitorDTO::new).toList();
+    }
+
+    @Override
+    public VisitorDTO getVisitorById(Integer id) {
+        User user = getUser();
+
+        Optional<Visitor> visitorOptional = visitorRepository.findById(id);
+        if (visitorOptional.isEmpty())
+            return null;
+        Visitor visitor = visitorOptional.get();
+
+        Resident resident = residentRepository.findByUser_Id(user.getId());
+        if (resident == null)
+            throw new PorteiroException(HttpStatus.UNAUTHORIZED, "Current user is not a resident.");
+
+        if (!visitor.getResident().equals(resident))
+            throw new PorteiroException(HttpStatus.FORBIDDEN, "Cannot see other resident's visitors");
+
+        return new VisitorDTO(visitor);
+    }
+
+    @Override
+    public VisitorDTO createVisitor(VisitorDTO visitorRequest) {
+        User user = getUser();
+
+        Resident resident = residentRepository.findByUser_Id(user.getId());
+        if (resident == null)
+            throw new PorteiroException(HttpStatus.UNAUTHORIZED, "Current user is not a resident.");
+
+        Visitor visitor = new Visitor();
+        visitor.setResident(resident);
+        visitor.setName(visitorRequest.getName());
+        visitor.setDocument(visitorRequest.getDocument());
+        visitor.setCreatedAt(new Date());
+        visitor.setUpdatedAt(null);
+        visitor.setRelationship(visitorRequest.getRelationship());
+        visitor.setAuthType(visitorRequest.getAuthType());
+        visitorRepository.save(visitor);
+        return new VisitorDTO(visitor);
+    }
+
+    @Override
+    public VisitorDTO updateVisitor(Integer id, VisitorDTO visitorRequest) {
+        User user = getUser();
+
+        Resident resident = residentRepository.findByUser_Id(user.getId());
+        if (resident == null)
+            throw new PorteiroException(HttpStatus.UNAUTHORIZED, "Current user is not a resident.");
+
+        Optional<Visitor> visitorOptional = visitorRepository.findById(id);
+
+        if (visitorOptional.isEmpty())
+            throw new PorteiroException(HttpStatus.NOT_FOUND, "No visitor registered with id: " + id);
+
+        Visitor visitor = visitorOptional.get();
+
+        if (!visitor.getResident().equals(resident))
+            throw new PorteiroException(HttpStatus.FORBIDDEN, "Cannot update other resident's visitor");
+
+        visitor.setName(visitorRequest.getName());
+        visitor.setDocument(visitorRequest.getDocument());
+        visitor.setUpdatedAt(new Date());
+        visitor.setAuthType(visitorRequest.getAuthType());
+        visitor.setRelationship(visitorRequest.getRelationship());
+        visitorRepository.save(visitor);
+        return new VisitorDTO(visitor);
+    }
+
+    @Override
+    public void deleteVisitor(Integer id) {
+        User user = getUser();
+
+        Resident resident = residentRepository.findByUser_Id(user.getId());
+        if (resident == null)
+            throw new PorteiroException(HttpStatus.UNAUTHORIZED, "Current user is not a resident.");
+
+        Optional<Visitor> visitorOptional = visitorRepository.findById(id);
+
+        if (visitorOptional.isEmpty())
+            throw new PorteiroException(HttpStatus.NOT_FOUND, "No visitor registered with id: " + id);
+
+        Visitor visitor = visitorOptional.get();
+
+        if (!visitor.getResident().equals(resident))
+            throw new PorteiroException(HttpStatus.FORBIDDEN, "Cannot delete other resident's visitor");
+
+        visitorRepository.delete(visitor);
     }
 
 }

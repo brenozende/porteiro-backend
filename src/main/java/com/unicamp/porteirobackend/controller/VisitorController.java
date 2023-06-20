@@ -1,9 +1,12 @@
 package com.unicamp.porteirobackend.controller;
 
-import com.unicamp.porteirobackend.entity.Visitor;
-import com.unicamp.porteirobackend.repository.VisitorRepository;
+import com.unicamp.porteirobackend.dto.VisitorDTO;
+import com.unicamp.porteirobackend.exception.PorteiroException;
+import com.unicamp.porteirobackend.service.PorteiroService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 
@@ -12,32 +15,60 @@ import java.util.List;
 public class VisitorController {
 
     @Autowired
-    private VisitorRepository visitorRepository;
+    private PorteiroService porteiroService;
 
     @GetMapping
-    public List<Visitor> getAllVisitor() {
-        return visitorRepository.findAll();
+    public ResponseEntity<?> getAllVisitor() {
+        List<VisitorDTO> visitors;
+        try {
+            visitors = porteiroService.getAllVisitors();
+        } catch (PorteiroException e) {
+            return ResponseEntity.status(e.getStatus()).body(e.getErrorMsg());
+        }
+        return ResponseEntity.ok(visitors);
     }
 
     @GetMapping("/{id}")
-    public Visitor getVisitorById(@PathVariable Integer id) {
-        return visitorRepository.findById(id).orElse(null);
+    public ResponseEntity<?> getVisitorById(@PathVariable Integer id) {
+        VisitorDTO visitor;
+        try {
+            visitor = porteiroService.getVisitorById(id);
+        } catch (PorteiroException e) {
+            return ResponseEntity.status(e.getStatus()).body(e.getErrorMsg());
+        }
+        return ResponseEntity.ok(visitor);
     }
 
     @PostMapping
-    public Visitor createVisitor(@RequestBody Visitor visitor) {
-        return visitorRepository.save(visitor);
+    public ResponseEntity<?> createVisitor(@RequestBody VisitorDTO visitorRequest) {
+        VisitorDTO visitor;
+        try {
+            visitor = porteiroService.createVisitor(visitorRequest);
+        } catch (PorteiroException e) {
+            return ResponseEntity.status(e.getStatus()).body(e.getErrorMsg());
+        }
+        return ResponseEntity.created(UriComponentsBuilder.fromPath("/{id}").buildAndExpand(visitor.getId()).toUri()).body(visitor);
     }
 
     @PutMapping("/{id}")
-    public Visitor updateVisitor(@PathVariable Integer id, @RequestBody Visitor visitor) {
-        visitor.setId(id);
-        return visitorRepository.save(visitor);
+    public ResponseEntity<?> updateVisitor(@PathVariable Integer id, @RequestBody VisitorDTO visitorRequest) {
+        VisitorDTO visitor;
+        try {
+            visitor = porteiroService.updateVisitor(id, visitorRequest);
+        } catch (PorteiroException e) {
+            return ResponseEntity.status(e.getStatus()).body(e.getErrorMsg());
+        }
+        return ResponseEntity.ok(visitor);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteVisitor(@PathVariable Integer id) {
-        visitorRepository.deleteById(id);
+    public ResponseEntity<?> deleteVisitor(@PathVariable Integer id) {
+        try {
+            porteiroService.deleteVisitor(id);
+        } catch (PorteiroException e) {
+            return ResponseEntity.status(e.getStatus()).body(e.getErrorMsg());
+        }
+        return ResponseEntity.noContent().build();
     }
 
 }

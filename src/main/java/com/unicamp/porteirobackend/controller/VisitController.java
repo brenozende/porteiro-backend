@@ -1,12 +1,10 @@
 package com.unicamp.porteirobackend.controller;
 
 import com.unicamp.porteirobackend.dto.VisitDTO;
-import com.unicamp.porteirobackend.entity.Resident;
 import com.unicamp.porteirobackend.entity.User;
-import com.unicamp.porteirobackend.entity.Visit;
-import com.unicamp.porteirobackend.entity.Visitor;
 import com.unicamp.porteirobackend.enums.EVisitStatus;
 import com.unicamp.porteirobackend.exception.BookingCreationException;
+import com.unicamp.porteirobackend.exception.PorteiroException;
 import com.unicamp.porteirobackend.repository.VisitRepository;
 import com.unicamp.porteirobackend.repository.VisitorRepository;
 import com.unicamp.porteirobackend.security.services.UserDetailsImpl;
@@ -17,9 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @CrossOrigin(allowedHeaders = {"Authorization"})
 @RestController
@@ -36,9 +32,12 @@ public class VisitController {
 
     @GetMapping
     public ResponseEntity<?> getAllVisit() {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        User user = porteiroService.getUser(userDetails);
-        List<VisitDTO> visits = porteiroService.getVisitsForUser(user);
+        List<VisitDTO> visits;
+        try {
+            visits = porteiroService.getVisits();
+        } catch (PorteiroException e) {
+            return ResponseEntity.status(e.getStatus()).body(e.getErrorMsg());
+        }
         if (visits.isEmpty())
             return ResponseEntity.notFound().build();
         return ResponseEntity.ok(visits);
@@ -46,10 +45,12 @@ public class VisitController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getVisitById(@PathVariable Integer id) {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        User user = porteiroService.getUser(userDetails);
-
-        VisitDTO visit = porteiroService.getVisitById(id, user);
+        VisitDTO visit;
+        try {
+            visit = porteiroService.getVisitById(id);
+        } catch (PorteiroException e) {
+            return ResponseEntity.status(e.getStatus()).body(e.getErrorMsg());
+        }
 
         if (visit == null)
             return ResponseEntity.notFound().build();
@@ -58,15 +59,12 @@ public class VisitController {
 
     @PostMapping
     public ResponseEntity<?> createVisit(@RequestBody VisitDTO visitRequest) {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        User user = porteiroService.getUser(userDetails);
         VisitDTO visit;
         try {
-            visit = porteiroService.createVisit(visitRequest, user);
+            visit = porteiroService.createVisit(visitRequest);
         } catch (BookingCreationException e) {
             return ResponseEntity.internalServerError().body(e.getErrorMsg());
         }
-
 
         return ResponseEntity.created(UriComponentsBuilder.fromPath("/")
                 .buildAndExpand(visit.getId()).toUri()).body(visit);
@@ -74,13 +72,11 @@ public class VisitController {
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateVisit(@PathVariable Integer id, @RequestBody VisitDTO visitRequest) {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        User user = porteiroService.getUser(userDetails);
         VisitDTO visit;
         try {
-            visit = porteiroService.updateVisit(id, visitRequest, user);
-        } catch (BookingCreationException e) {
-            return ResponseEntity.internalServerError().body(e.getErrorMsg());
+            visit = porteiroService.updateVisit(id, visitRequest);
+        } catch (PorteiroException e) {
+            return ResponseEntity.status(e.getStatus()).body(e.getErrorMsg());
         }
 
         return ResponseEntity.ok(visit);
@@ -88,23 +84,19 @@ public class VisitController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteVisit(@PathVariable Integer id) {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        User user = porteiroService.getUser(userDetails);
         try {
-            porteiroService.deleteVisit(id, user);
-        } catch (BookingCreationException e) {
-            return ResponseEntity.internalServerError().body(e.getErrorMsg());
+            porteiroService.deleteVisit(id);
+        } catch (PorteiroException e) {
+            return ResponseEntity.status(e.getStatus()).body(e.getErrorMsg());
         }
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/status/{status}")
     public ResponseEntity<?> getVisitByStatus(@PathVariable EVisitStatus status) {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        User user = porteiroService.getUser(userDetails);
         List<VisitDTO> visits;
         try {
-            visits = porteiroService.findVisitByStatus(status, user);
+            visits = porteiroService.findVisitByStatus(status);
         } catch (BookingCreationException e) {
             return ResponseEntity.internalServerError().body(e.getErrorMsg());
         }
