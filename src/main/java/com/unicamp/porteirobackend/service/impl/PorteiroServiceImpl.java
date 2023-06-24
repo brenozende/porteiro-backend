@@ -212,8 +212,11 @@ public class PorteiroServiceImpl implements PorteiroService {
             return null;
         Resident resident = residentOptional.get();
         for (VisitorDTO v : visitors) {
-            resident.getVisitors().add(new Visitor(v, resident));
+            Visitor visitor = new Visitor(v, resident);
+            resident.getVisitors().add(visitor);
+            visitorRepository.save(visitor);
         }
+        residentRepository.save(resident);
         return new ResidentDTO(resident);
     }
 
@@ -662,7 +665,7 @@ public class PorteiroServiceImpl implements PorteiroService {
         visitor.setUpdatedAt(null);
         visitor.setRelationship(visitorRequest.getRelationship());
         visitor.setAuthType(visitorRequest.getAuthType());
-        visitorRepository.save(visitor);
+        visitor = visitorRepository.saveAndFlush(visitor);
         return new VisitorDTO(visitor);
     }
 
