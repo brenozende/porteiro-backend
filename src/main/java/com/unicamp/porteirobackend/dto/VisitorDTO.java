@@ -9,6 +9,7 @@ public class VisitorDTO {
     private Integer id;
     private String name;
     private String document;
+    private ResidentDTO resident;
     private String relationship;
     private EAuthType authType;
 
@@ -16,6 +17,7 @@ public class VisitorDTO {
         this.id = visitor.getId();
         this.name = visitor.getName();
         this.document = visitor.getDocument();
+        this.resident = new ResidentDTO(visitor.getResident());
         this.relationship = visitor.getRelationship();
         this.authType = visitor.getAuthType();
     }
