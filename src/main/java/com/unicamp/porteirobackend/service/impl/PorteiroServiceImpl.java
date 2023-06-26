@@ -617,6 +617,7 @@ public class PorteiroServiceImpl implements PorteiroService {
             List<Visitor> visitors = visitorRepository.findAll();
             if (visitors.isEmpty())
                 throw new PorteiroException(HttpStatus.NOT_FOUND, "No visitors found");
+            return visitors.stream().map(VisitorDTO::new).toList();
         }
 
         Resident resident = residentRepository.findByUser_Id(user.getId());

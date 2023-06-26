@@ -10,6 +10,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 
+@CrossOrigin(allowedHeaders = {"Authorization"})
 @RestController
 @RequestMapping("/api/visitors")
 public class VisitorController {
