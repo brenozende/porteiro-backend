@@ -47,9 +47,7 @@ public class VisitController {
 
     @PostMapping
     public ResponseEntity<VisitDTO> createVisit(@RequestBody VisitDTO visitRequest) {
-        VisitDTO visit;
-        visit = porteiroService.createVisit(visitRequest);
-
+        VisitDTO visit = porteiroService.createVisit(visitRequest);
         return ResponseEntity.created(UriComponentsBuilder.fromPath("/")
                 .buildAndExpand(visit.getId()).toUri()).body(visit);
     }

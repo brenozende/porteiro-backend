@@ -1,9 +1,11 @@
 package com.unicamp.porteirobackend.dto;
 
 import com.unicamp.porteirobackend.entity.Address;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
+@AllArgsConstructor
 public class AddressDTO {
     private Integer id;
     private String city;

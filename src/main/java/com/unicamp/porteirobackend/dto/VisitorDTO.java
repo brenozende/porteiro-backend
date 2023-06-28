@@ -2,9 +2,11 @@ package com.unicamp.porteirobackend.dto;
 
 import com.unicamp.porteirobackend.entity.Visitor;
 import com.unicamp.porteirobackend.enums.EAuthType;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
+@AllArgsConstructor
 public class VisitorDTO {
     private Integer id;
     private String name;

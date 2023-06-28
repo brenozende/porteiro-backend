@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -21,6 +22,8 @@ import java.util.*;
 @Service
 @Slf4j
 public class PorteiroServiceImpl implements PorteiroService {
+    @Autowired
+    private RoleRepository roleRepository;
     @Autowired
     private EmergencyContactRepository emergencyContactRepository;
     @Autowired
@@ -42,6 +45,9 @@ public class PorteiroServiceImpl implements PorteiroService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    PasswordEncoder encoder;
 
     @Override
     public ApartmentDTO createApartment(ApartmentDTO apartmentRequest) {
@@ -130,15 +136,16 @@ public class PorteiroServiceImpl implements PorteiroService {
         resident.setUpdatedAt(null);
         resident.setOwner(form.isOwner());
 
+        Optional<Role> roleOptional = roleRepository.findByName(EUserRole.RES);
         Set<Role> roles = new HashSet<>();
-        roles.add(new Role(EUserRole.RES));
+        roles.add(roleOptional.orElse(null));
 
         User residentUser = new User();
         residentUser.setEmail(form.getEmail());
         residentUser.setRoles(roles);
         //TODO: gerar username e senha p/ morador novo
         residentUser.setUsername(form.getEmail());
-        residentUser.setPassword("123456");
+        residentUser.setPassword(encoder.encode("123456"));
         userRepository.save(residentUser);
         resident.setUser(residentUser);
 
@@ -147,26 +154,36 @@ public class PorteiroServiceImpl implements PorteiroService {
             Visitor visitor = new Visitor(v, resident);
             visitors.add(visitor);
         });
-        visitorRepository.saveAll(visitors);
         resident.setVisitors(visitors);
 
-        Address mailingAddress = new Address(form.getMailingAddress());
-        addressRepository.save(mailingAddress);
+        Address mailingAddress = null;
+        if (form.getMailingAddress() != null){
+            if (form.getMailingAddress().getId() != null)
+                mailingAddress = addressRepository.findById(form.getMailingAddress().getId()).orElse(null);
+            else {
+                mailingAddress = new Address(form.getMailingAddress());
+                addressRepository.save(mailingAddress);
+            }
+        }
+
         resident.setMailAddress(mailingAddress);
 
         Apartment apartment = apartmentRepository.findByNumber(form.getApartment());
         if (apartment != null)
             resident.setApartments(Set.of(apartment));
 
-        Set<EmergencyContact> emergencyContacts = new HashSet<>();
-        form.getEmergencyContacts().forEach(e -> {
-            EmergencyContact emergencyContact = new EmergencyContact(e, resident);
-            emergencyContacts.add(emergencyContact);
-        });
-        emergencyContactRepository.saveAll(emergencyContacts);
-        resident.setEmergencyContacts(emergencyContacts);
+        if (form.getEmergencyContacts() != null) {
+            Set<EmergencyContact> emergencyContacts = new HashSet<>();
+            form.getEmergencyContacts().forEach(e -> {
+                EmergencyContact emergencyContact = new EmergencyContact(e, resident);
+                emergencyContacts.add(emergencyContact);
+            });
+            emergencyContactRepository.saveAll(emergencyContacts);
+            resident.setEmergencyContacts(emergencyContacts);
+        }
 
         residentRepository.save(resident);
+        visitorRepository.saveAll(visitors);
         return new ResidentDTO(resident);
     }
 
@@ -528,8 +545,13 @@ public class PorteiroServiceImpl implements PorteiroService {
             throw new PorteiroException(HttpStatus.BAD_REQUEST, "The informed visitor is not registered");
 
         Resident resident = residentRepository.findByUser_Id(user.getId());
-        if (resident == null)
-            throw new PorteiroException(HttpStatus.UNAUTHORIZED, "Current user is not a resident");
+
+        // Se user for porteiro, precisa informar resident na request
+        if (resident == null && user.getRoles().stream().anyMatch(r -> r.getName().equals(EUserRole.CON)))
+            resident = residentRepository.findById(visitRequest.getVisitor().getResident().getId()).orElse(null);
+        if (resident == null) {
+            throw new PorteiroException(HttpStatus.UNAUTHORIZED, "Current user is not a resident or concierge/admin");
+        }
 
         if (!visitor.get().getResident().equals(resident))
             throw new PorteiroException(HttpStatus.BAD_REQUEST, "Visitor not registered for this resident");

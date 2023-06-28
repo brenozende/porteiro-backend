@@ -1,9 +1,11 @@
 package com.unicamp.porteirobackend.dto;
 
 import com.unicamp.porteirobackend.entity.Apartment;
-import lombok.Data;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
+@AllArgsConstructor
 public class ApartmentDTO {
     private Integer id;
     private Integer number;

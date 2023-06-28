@@ -2,11 +2,13 @@ package com.unicamp.porteirobackend.dto;
 
 import com.unicamp.porteirobackend.entity.Visit;
 import com.unicamp.porteirobackend.enums.EVisitStatus;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.Date;
 
 @Data
+@AllArgsConstructor
 public class VisitDTO {
     private Integer id;
     private VisitorDTO visitor;
