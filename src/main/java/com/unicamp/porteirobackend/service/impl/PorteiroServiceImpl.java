@@ -554,8 +554,9 @@ public class PorteiroServiceImpl implements PorteiroService {
         if (resident == null && (user.getRoles().stream().anyMatch(r -> r.getName().equals(EUserRole.CON))
                 || user.getRoles().stream().anyMatch(r -> r.getName().equals(EUserRole.ADM))))
             resident = residentRepository.findById(visitRequest.getVisitor().getResident().getId()).orElse(null);
+
         if (resident == null) {
-            throw new PorteiroException(HttpStatus.UNAUTHORIZED, "Current user is not a resident or concierge/admin");
+            throw new PorteiroException(HttpStatus.NOT_FOUND, "Resident not found.");
         }
 
         if (!visitor.get().getResident().equals(resident))
