@@ -73,6 +73,8 @@ public interface PorteiroService {
 
     List<VisitorDTO> getAllVisitors();
 
+    List<ResidentDTO> getAllResidents();
+
     VisitorDTO getVisitorById(Integer id);
 
     VisitorDTO createVisitor(VisitorDTO visitorRequest);

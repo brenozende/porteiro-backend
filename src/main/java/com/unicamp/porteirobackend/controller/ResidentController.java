@@ -3,23 +3,28 @@ package com.unicamp.porteirobackend.controller;
 import com.unicamp.porteirobackend.dto.ResidentDTO;
 import com.unicamp.porteirobackend.dto.VisitorDTO;
 import com.unicamp.porteirobackend.dto.request.RegisterForm;
-import com.unicamp.porteirobackend.entity.Resident;
-import com.unicamp.porteirobackend.entity.Visitor;
 import com.unicamp.porteirobackend.service.PorteiroService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
-
 import java.util.List;
 
+@CrossOrigin(allowedHeaders = {"Authorization"})
 @RestController
 @RequestMapping("/api/resident")
 public class ResidentController {
 
     @Autowired
     PorteiroService porteiroService;
+
+    @PreAuthorize("hasAnyAuthority('ADM', 'CON')")
+    @GetMapping
+    public ResponseEntity<List<ResidentDTO>> getAllResidents() {
+        List<ResidentDTO> visitors = porteiroService.getAllResidents();
+        return ResponseEntity.ok(visitors);
+    }
 
     @PreAuthorize("hasAnyAuthority('ADM', 'CON')")
     @PostMapping("/register")

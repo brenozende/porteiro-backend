@@ -632,6 +632,12 @@ public class PorteiroServiceImpl implements PorteiroService {
     }
 
     @Override
+    public List<ResidentDTO> getAllResidents() {
+        List<Resident> residents = residentRepository.findAll();
+        return residents.stream().map(ResidentDTO::new).toList();
+    }
+
+    @Override
     public VisitorDTO getVisitorById(Integer id) {
         User user = getUser();
 
