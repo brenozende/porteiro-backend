@@ -2,7 +2,6 @@ package com.unicamp.porteirobackend.controller;
 
 import com.unicamp.porteirobackend.dto.VisitDTO;
 import com.unicamp.porteirobackend.enums.EVisitStatus;
-import com.unicamp.porteirobackend.exception.PorteiroException;
 import com.unicamp.porteirobackend.repository.VisitRepository;
 import com.unicamp.porteirobackend.repository.VisitorRepository;
 import com.unicamp.porteirobackend.service.PorteiroService;
