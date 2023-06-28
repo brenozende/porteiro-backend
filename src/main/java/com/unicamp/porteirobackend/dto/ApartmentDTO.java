@@ -3,6 +3,9 @@ package com.unicamp.porteirobackend.dto;
 import com.unicamp.porteirobackend.entity.Apartment;
 import lombok.*;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -13,6 +16,7 @@ public class ApartmentDTO {
     private AddressDTO address;
     private String block;
     private String realEstate;
+    private List<ResidentDTO> residents;
 
     public ApartmentDTO(Apartment apartment){
         this.id = apartment.getId();
@@ -21,5 +25,7 @@ public class ApartmentDTO {
         this.address = new AddressDTO(apartment.getAddress());
         this.block = apartment.getBlock();
         this.realEstate = apartment.getRealEstate();
+        if (!apartment.getResidents().isEmpty())
+            this.residents = apartment.getResidents().stream().map(ResidentDTO::new).collect(Collectors.toList());
     }
 }

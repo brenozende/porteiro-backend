@@ -12,4 +12,9 @@ public class GlobalControllerExceptionHandler {
     public ResponseEntity<String> handleConversion(PorteiroException ex) {
         return new ResponseEntity<>(ex.getErrorMsg(), ex.getStatus());
     }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<String> handleConversion(RuntimeException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }

@@ -175,6 +175,7 @@ public class PorteiroServiceImpl implements PorteiroService {
         if (apartment == null)
             throw new PorteiroException(HttpStatus.NOT_FOUND, "Must provide a valid apartment number");
         resident.setApartments(Set.of(apartment));
+        apartment.setResidents(Set.of(resident));
 
         if (form.getEmergencyContacts() != null) {
             Set<EmergencyContact> emergencyContacts = new HashSet<>();
@@ -187,6 +188,7 @@ public class PorteiroServiceImpl implements PorteiroService {
         }
 
         residentRepository.save(resident);
+        apartmentRepository.save(apartment);
         visitorRepository.saveAll(visitors);
         return new ResidentDTO(resident);
     }
@@ -543,7 +545,6 @@ public class PorteiroServiceImpl implements PorteiroService {
     @Override
     public VisitDTO createVisit(VisitDTO visitRequest){
         User user = getUser();
-        Visit visit = new Visit();
         Optional<Visitor> visitor = visitorRepository.findById(visitRequest.getVisitor().getId());
         if (visitor.isEmpty())
             throw new PorteiroException(HttpStatus.BAD_REQUEST, "The informed visitor is not registered");
@@ -562,6 +563,7 @@ public class PorteiroServiceImpl implements PorteiroService {
         if (!visitor.get().getResident().equals(resident))
             throw new PorteiroException(HttpStatus.BAD_REQUEST, "Visitor not registered for this resident");
 
+        Visit visit = new Visit();
         visit.setVisitor(visitor.get());
         visit.setCreatedAt(new Date());
         visit.setUpdatedAt(null);

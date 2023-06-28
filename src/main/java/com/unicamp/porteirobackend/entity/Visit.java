@@ -3,6 +3,7 @@ package com.unicamp.porteirobackend.entity;
 import com.unicamp.porteirobackend.enums.EVisitStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -12,6 +13,7 @@ import java.util.Date;
 @Getter
 @Setter
 @Entity
+@NoArgsConstructor
 @Table(name = "visit")
 public class Visit {
 

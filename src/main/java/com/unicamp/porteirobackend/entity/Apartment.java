@@ -5,7 +5,9 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.Hibernate;
 
+import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -32,6 +34,12 @@ public class Apartment {
 
     @Column(name = "real_estate")
     private String realEstate;
+
+    @ManyToMany
+    @JoinTable(name = "resident_apartments",
+            joinColumns = @JoinColumn(name = "apartments_id"),
+            inverseJoinColumns = @JoinColumn(name = "resident_id"))
+    private Set<Resident> residents = new LinkedHashSet<>();
 
     @Override
     public boolean equals(Object o) {
