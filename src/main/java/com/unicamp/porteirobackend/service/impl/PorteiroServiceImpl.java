@@ -145,6 +145,9 @@ public class PorteiroServiceImpl implements PorteiroService {
         residentUser.setRoles(roles);
         //TODO: gerar username e senha p/ morador novo
         residentUser.setUsername(form.getEmail());
+        Optional<User> existingUser = userRepository.findByUsername(form.getEmail());
+        if (existingUser.isPresent())
+            throw new PorteiroException(HttpStatus.BAD_REQUEST, "Username or email already taken");
         residentUser.setPassword(encoder.encode("123456"));
         userRepository.save(residentUser);
         resident.setUser(residentUser);
@@ -169,8 +172,9 @@ public class PorteiroServiceImpl implements PorteiroService {
         resident.setMailAddress(mailingAddress);
 
         Apartment apartment = apartmentRepository.findByNumber(form.getApartment());
-        if (apartment != null)
-            resident.setApartments(Set.of(apartment));
+        if (apartment == null)
+            throw new PorteiroException(HttpStatus.NOT_FOUND, "Must provide a valid apartment number");
+        resident.setApartments(Set.of(apartment));
 
         if (form.getEmergencyContacts() != null) {
             Set<EmergencyContact> emergencyContacts = new HashSet<>();
@@ -547,7 +551,8 @@ public class PorteiroServiceImpl implements PorteiroService {
         Resident resident = residentRepository.findByUser_Id(user.getId());
 
         // Se user for porteiro, precisa informar resident na request
-        if (resident == null && user.getRoles().stream().anyMatch(r -> r.getName().equals(EUserRole.CON)))
+        if (resident == null && (user.getRoles().stream().anyMatch(r -> r.getName().equals(EUserRole.CON))
+                || user.getRoles().stream().anyMatch(r -> r.getName().equals(EUserRole.ADM))))
             resident = residentRepository.findById(visitRequest.getVisitor().getResident().getId()).orElse(null);
         if (resident == null) {
             throw new PorteiroException(HttpStatus.UNAUTHORIZED, "Current user is not a resident or concierge/admin");
