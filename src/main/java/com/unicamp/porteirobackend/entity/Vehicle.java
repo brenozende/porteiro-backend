@@ -13,7 +13,7 @@ import java.util.Objects;
 @Table(name = "vehicle")
 public class Vehicle {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
