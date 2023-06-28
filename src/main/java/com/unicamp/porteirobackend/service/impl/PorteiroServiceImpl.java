@@ -548,19 +548,19 @@ public class PorteiroServiceImpl implements PorteiroService {
         if (visitor.isEmpty())
             throw new PorteiroException(HttpStatus.BAD_REQUEST, "The informed visitor is not registered");
 
-        Resident resident = residentRepository.findByUser_Id(user.getId());
-
-        // Se user for porteiro, precisa informar resident na request
-        if (resident == null && (user.getRoles().stream().anyMatch(r -> r.getName().equals(EUserRole.CON))
-                || user.getRoles().stream().anyMatch(r -> r.getName().equals(EUserRole.ADM))))
-            resident = residentRepository.findById(visitRequest.getVisitor().getResident().getId()).orElse(null);
-
-        if (resident == null) {
-            throw new PorteiroException(HttpStatus.NOT_FOUND, "Resident not found.");
-        }
-
-        if (!visitor.get().getResident().equals(resident))
-            throw new PorteiroException(HttpStatus.BAD_REQUEST, "Visitor not registered for this resident");
+//        Resident resident = residentRepository.findByUser_Id(user.getId());
+//
+//        // Se user for porteiro, precisa informar resident na request
+//        if (resident == null && (user.getRoles().stream().anyMatch(r -> r.getName().equals(EUserRole.CON))
+//                || user.getRoles().stream().anyMatch(r -> r.getName().equals(EUserRole.ADM))))
+//            resident = residentRepository.findById(visitRequest.getVisitor().getResident().getId()).orElse(null);
+//
+//        if (resident == null) {
+//            throw new PorteiroException(HttpStatus.NOT_FOUND, "Resident not found.");
+//        }
+//
+//        if (!visitor.get().getResident().equals(resident))
+//            throw new PorteiroException(HttpStatus.BAD_REQUEST, "Visitor not registered for this resident");
 
         visit.setVisitor(visitor.get());
         visit.setCreatedAt(new Date());
