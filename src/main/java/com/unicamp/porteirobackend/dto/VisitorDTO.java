@@ -23,4 +23,16 @@ public class VisitorDTO {
         this.relationship = visitor.getRelationship();
         this.authType = visitor.getAuthType();
     }
+
+    public VisitorDTO(Visitor visitor, boolean shouldIncludeResident) {
+        this.id = visitor.getId();
+        this.name = visitor.getName();
+        this.document = visitor.getDocument();
+        this.relationship = visitor.getRelationship();
+        this.authType = visitor.getAuthType();
+
+        if(shouldIncludeResident) {
+            this.resident = new ResidentDTO(visitor.getResident());
+        }
+    }
 }
